@@ -1,3 +1,45 @@
+
+
+
+
+<?php
+
+require_once 'database.php'; 
+require_once 'Authentication.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
+    
+    $username = htmlspecialchars(trim($_POST['username']));
+    $email = htmlspecialchars(trim($_POST['email']));
+    $bday = htmlspecialchars(trim($_POST['bday']));
+    $firstName = htmlspecialchars(trim($_POST['first_name']));
+    $lastName = htmlspecialchars(trim($_POST['last_name']));
+    $password = htmlspecialchars(trim($_POST['password']));
+    $accountType = htmlspecialchars(trim($_POST['account_type']));
+
+    try {
+        
+        $auth = new Authentication($pdo); // $pdo is the database connection
+
+        $success = $auth->register($username, $email, $password, $accountType, $bday, "$firstName $lastName");
+
+        if ($success) {
+            
+            echo "<script>alert('Registration successful!'); window.location.href = 'login.php';</script>";
+        } else {
+            echo "<script>alert('Failed to register. Email or username may already be in use.');</script>";
+        }
+    } catch (Exception $e) {
+        
+        echo "<script>alert('Error: " . $e->getMessage() . "');</script>";
+    }
+}
+?>
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
