@@ -1,0 +1,74 @@
+CREATE DATABASE artbase;
+USE artbase;
+
+
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY AUTO_INCREMENT,
+    Username VARCHAR(50) UNIQUE NOT NULL,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    UserType ENUM('Admin', 'Member', 'Author') NOT NULL,
+    DateOfJoining DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Birthday DATE NOT NULL,
+    Bio TEXT 
+);
+
+CREATE TABLE Articles (
+    ArticleID INT PRIMARY KEY AUTO_INCREMENT,
+    AuthorID INT,
+    BannerImage VARCHAR(255),
+    Title VARCHAR(255) NOT NULL,
+    InnerText TEXT NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE Votes (
+    VoteID INT PRIMARY KEY AUTO_INCREMENT,
+    ArticleID INT,
+    UserID INT,
+    VoteType ENUM('Upvote', 'Downvote') NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ArticleID) REFERENCES Articles(ArticleID),
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    UNIQUE(UserID, ArticleID) 
+);
+
+CREATE TABLE AuthorDetails (
+    AuthorDetailID INT PRIMARY KEY AUTO_INCREMENT,
+    AuthorID INT,
+    FollowersCount INT DEFAULT 0,
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE Followers (
+    FollowerID INT PRIMARY KEY AUTO_INCREMENT,
+    MemberID INT,
+    AuthorID INT,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (AuthorID) REFERENCES Users(UserID),
+    UNIQUE(MemberID, AuthorID) 
+);
+
+CREATE TABLE Comments (
+    CommentID INT PRIMARY KEY AUTO_INCREMENT,
+    ArticleID INT,
+    UserID INT,
+    CommentText TEXT NOT NULL,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ArticleID) REFERENCES Articles(ArticleID),
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE LikedArticles (
+    LikedArticleID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    ArticleID INT,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    FOREIGN KEY (ArticleID) REFERENCES Articles(ArticleID),
+    UNIQUE(UserID, ArticleID) 
+);
