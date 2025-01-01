@@ -1,0 +1,140 @@
+[
+  {
+    "styles": "#styles:,",
+    "tag": "section",
+    "backgroundImage": "",
+    "_type": "Box",
+    "_id": "uergwD",
+    "_name": "Section"
+  },
+  {
+    "styles": "#styles:,container mx-auto flex min-h-screen items-center px-6 py-12 dark:bg-black",
+    "tag": "div",
+    "backgroundImage": "",
+    "_type": "Box",
+    "_id": "cdbvtg",
+    "_name": "Box",
+    "_parent": "uergwD"
+  },
+  {
+    "styles": "#styles:,mx-auto flex max-w-sm flex-col items-center text-center",
+    "tag": "div",
+    "backgroundImage": "",
+    "_type": "Box",
+    "_id": "kcuvAn",
+    "_name": "Box",
+    "_parent": "cdbvtg"
+  },
+  {
+    "styles": "#styles:,bg-primary-50 text-primary-500 rounded-full p-3 text-sm font-medium dark:bg-gray-800",
+    "content": "",
+    "_type": "Paragraph",
+    "_id": "ivvkgw",
+    "_parent": "kcuvAn"
+  },
+  {
+    "styles": "#styles:, w-24px h-24px h-6 w-6",
+    "icon": "<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' d='M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'></path></svg>",
+    "width": "",
+    "height": "",
+    "_type": "Icon",
+    "_id": "eptzmx",
+    "_parent": "ivvkgw"
+  },
+  {
+    "level": "h2",
+    "styles": "#styles:,mt-3 text-2xl font-semibold text-gray-800 md:text-3xl dark:text-white",
+    "content": "404 Page not found\n",
+    "_type": "Heading",
+    "_id": "keDBmA",
+    "_parent": "kcuvAn"
+  },
+  {
+    "styles": "#styles:,mt-4 text-gray-500 dark:text-gray-400",
+    "content": " The page you are looking for doesn't exist. Here are some helpful links: ",
+    "_type": "Paragraph",
+    "_id": "kcqspd",
+    "_parent": "kcuvAn"
+  },
+  {
+    "styles": "#styles:,mt-6 flex w-full shrink-0 items-center gap-x-3 sm:w-auto",
+    "tag": "div",
+    "backgroundImage": "",
+    "_type": "Box",
+    "_id": "lnDhtz",
+    "_name": "Box",
+    "_parent": "kcuvAn"
+  },
+  {
+    "content": "Button",
+    "styles": "#styles:,flex w-1/2 items-center justify-center gap-x-2 rounded-lg border bg-white px-5 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-100 sm:w-auto dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800",
+    "icon": "",
+    "iconSize": 24,
+    "iconPos": "order-last",
+    "_type": "Button",
+    "_id": "dDlCoq",
+    "_parent": "lnDhtz"
+  },
+  {
+    "styles": "#styles:, w-24px h-24px h-5 w-5 rtl:rotate-180",
+    "icon": "<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' d='M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18'></path></svg>",
+    "width": "",
+    "height": "",
+    "_type": "Icon",
+    "_id": "qdCsbi",
+    "_parent": "dDlCoq"
+  },
+  {
+    "styles": "#styles:,",
+    "content": "Go back",
+    "_type": "Span",
+    "_id": "xdAqql",
+    "_parent": "dDlCoq"
+  },
+  {
+    "content": " Take me home ",
+    "styles": "#styles:,bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-500 w-1/2 shrink-0 rounded-lg px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 sm:w-auto",
+    "icon": "",
+    "iconSize": 24,
+    "iconPos": "order-last",
+    "_type": "Button",
+    "_id": "rxkcly",
+    "_parent": "lnDhtz"
+  },
+  {
+    "_type": "@chai/seo-settings",
+    "_value": {}
+  },
+  {
+    "_type": "@chai/branding-options",
+    "_value": {
+      "bodyFont": "Inter",
+      "headingFont": "Inter",
+      "roundedCorners": 5,
+      "primaryColor": "#570df8",
+      "secondaryColor": "#f002b8",
+      "bodyBgDarkColor": "#031022",
+      "bodyBgLightColor": "#fcfcfc",
+      "bodyTextDarkColor": "#ffffff",
+      "bodyTextLightColor": "#000000"
+    }
+  },
+  {
+    "_type": "@chai/theme-configuration",
+    "_value": {
+      "bodyFont": "Inter",
+      "headingFont": "Inter",
+      "roundedCorners": 5,
+      "primaryColor": "#570df8",
+      "secondaryColor": "#f002b8",
+      "bodyBgDarkColor": "#031022",
+      "bodyBgLightColor": "#fcfcfc",
+      "bodyTextDarkColor": "#ffffff",
+      "bodyTextLightColor": "#000000"
+    }
+  },
+  {
+    "_type": "@chai/page-ai-context",
+    "_value": ""
+  }
+]
