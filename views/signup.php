@@ -4,8 +4,12 @@
 
 <?php
 
-require_once 'database.php'; 
-require_once 'Authentication.php';
+require_once '../control/Database.php'; 
+require_once '../control/Authentication.php';
+
+
+$database = new Database();
+$pdo = $database->getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
     
@@ -21,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
         
         $auth = new Authentication($pdo); // $pdo is the database connection
 
-        $success = $auth->register($username, $email, $password, $accountType, $bday, "$firstName $lastName");
+
+        $success = $auth->register($username, $firstName, $lastName, $email, $password, $accountType, $bday, "No Bio");
 
         if ($success) {
             

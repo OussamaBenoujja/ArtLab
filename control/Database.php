@@ -4,7 +4,7 @@ class Database {
     private $host = "localhost";
     private $db_name = "artbase";
     private $username = "root";
-    private $password = "";
+    private $password = "osama";
     public $conn;
 
     public function getConnection() {

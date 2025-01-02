@@ -43,9 +43,9 @@ class Authentication {
 
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Verify the password
+        
         if ($user && password_verify($password, $user['Password'])) {
-            // Generate a session token (for simplicity)
+            
             $token = bin2hex(random_bytes(16));
             $this->updateToken($user['UserID'], $token);
             return [
@@ -58,7 +58,7 @@ class Authentication {
         return ["success" => false, "message" => "Invalid email or password."];
     }
 
-    // Update token for a user
+    
     private function updateToken($userID, $token) {
         $query = "UPDATE " . $this->table_name . " 
                   SET token_auth = :token WHERE UserID = :userID";
@@ -71,7 +71,7 @@ class Authentication {
         $stmt->execute();
     }
 
-    // Validate token
+   
     public function validateToken($token) {
         $query = "SELECT * FROM " . $this->table_name . " 
                   WHERE token_auth = :token";
