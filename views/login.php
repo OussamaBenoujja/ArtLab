@@ -1,3 +1,35 @@
+<?php
+session_start();
+
+
+require_once '../control/Database.php'; 
+require_once '../control/Authentication.php';
+
+$database = new Database();
+$pdo = $database->getConnection();
+
+if(isset($_POST['login'])){
+
+    $email      = $_POST['email'];
+    $password   = $_POST['password'];
+
+    $auth = new Authentication($pdo); 
+    $res = $auth->login($email, $password);
+    if($res['success']==true){
+
+        $_SESSION['token'] = $res['token'];
+        $_SESSION['user']  = $res['user'];
+        $_SESSION['user_id'] = $res['user_id'];
+        header('Location: home.php');
+    }else{
+        echo 'verfication failed!';
+    }
+
+}
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

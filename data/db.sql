@@ -72,3 +72,36 @@ CREATE TABLE LikedArticles (
     FOREIGN KEY (ArticleID) REFERENCES Articles(ArticleID),
     UNIQUE(UserID, ArticleID) 
 );
+
+CREATE VIEW ArticleDetailsView AS
+SELECT 
+    Articles.ArticleID,
+    Articles.Title,
+    Articles.InnerText,
+    Articles.BannerImage,
+    Articles.CreatedAt AS ArticleCreatedAt,
+    Users.UserID AS AuthorID,
+    CONCAT(Users.FirstName, ' ', Users.LastName) AS AuthorName,
+    Users.Email AS AuthorEmail,
+    Votes.VoteType,
+    Votes.CreatedAt AS VoteCreatedAt,
+    Comments.CommentID,
+    Comments.CommentText,
+    Comments.CreatedAt AS CommentCreatedAt,
+    Commenters.UserID AS CommenterID,
+    CONCAT(Commenters.FirstName, ' ', Commenters.LastName) AS CommenterName,
+    Commenters.Email AS CommenterEmail
+FROM Articles
+LEFT JOIN Users ON Articles.AuthorID = Users.UserID
+LEFT JOIN Votes ON Articles.ArticleID = Votes.ArticleID
+LEFT JOIN Comments ON Articles.ArticleID = Comments.ArticleID
+LEFT JOIN Users AS Commenters ON Comments.UserID = Commenters.UserID;
+
+ALTER TABLE Users
+ADD ProfileImage VARCHAR(255) DEFAULT '../assets/img/default.jpg';
+
+
+CREATE TABLE Categories (
+    CategoryID INT PRIMARY KEY AUTO_INCREMENT,
+    CategoryName VARCHAR(255) NOT NULL UNIQUE
+);

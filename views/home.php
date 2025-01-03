@@ -1,3 +1,25 @@
+<?php
+require_once "../control/Database.php"; 
+require_once "../control/Articles.php"; 
+
+$db = new Database(); 
+$articles = new Articles($db->getConnection()); 
+
+
+$allArticles = $articles->getAllArticles();
+$totalArticles = count($allArticles); 
+
+
+$articlesPerPage = 9;
+$totalPages = ceil($totalArticles / $articlesPerPage);
+$currentArticlePage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$currentArticlePage = max(1, min($totalPages, $currentArticlePage)); 
+$offset = ($currentArticlePage - 1) * $articlesPerPage;
+
+
+$currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +28,7 @@
     <title>Home Page</title>
     <link rel="stylesheet" href="../src/output.css">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="bg-gray-100">
 
@@ -23,80 +46,33 @@
     </header>
 
     <main class="max-w-7xl mx-auto p-6">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <label for="category" class="mr-2 font-medium">Category:</label>
-                <select id="category" class="border rounded p-2 focus:outline-none focus:ring focus:ring-blue-200">
-                    <option value="">All</option>
-                    <option value="tech">Technology</option>
-                    <option value="health">Health</option>
-                    <option value="travel">Travel</option>
-                </select>
-            </div>
-            <div>
-                <label for="sort" class="mr-2 font-medium">Sort by:</label>
-                <select id="sort" class="border rounded p-2 focus:outline-none focus:ring focus:ring-blue-200">
-                    <option value="newest">Newest</option>
-                    <option value="oldest">Oldest</option>
-                </select>
-            </div>
-        </div>
-
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Article Card 1 -->
+            <?php foreach ($currentArticles as $article): ?>
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <img src="https://via.placeholder.com/400x200" alt="Article Image" class="w-full h-48 object-cover">
+                <img src="<?= htmlspecialchars($article['BannerImage']) ?>" alt="Article Image" class="w-full h-48 object-cover">
                 <div class="p-4">
-                    <h2 class="text-lg font-semibold text-gray-800">Article Title 1</h2>
-                    <p class="text-gray-600 mt-2">This is a brief description of the article to give an overview of the content.</p>
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        <a href="article.php?articleID=<?= htmlspecialchars($article['ArticleID']) ?>" class="hover:underline">
+                            <?= htmlspecialchars($article['Title']) ?>
+                        </a>
+                    </h2>
+                    <p class="text-gray-600 mt-2"><?= htmlspecialchars($article['InnerText']) ?></p>
                     <div class="mt-4 flex justify-between items-center">
-                        <span class="text-gray-500 text-sm">By Author Name</span>
-                        <span class="text-gray-500 text-sm">2023-01-01</span>
-                    </div>
-                    <div class="flex items-center mt-4">
-                        <button class="text-green-600 mr-2">👍</button>
-                        <span class="text-gray-500 text-sm">Upvotes: 12</span>
+                        <span class="text-gray-500 text-sm">By <?= htmlspecialchars($article['AuthorName']) ?></span>
+                        <span class="text-gray-500 text-sm"><?= htmlspecialchars($article['CreatedAt']) ?></span>
                     </div>
                 </div>
             </div>
-
-            <!-- Article Card 2 -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <img src="https://via.placeholder.com/400x200" alt="Article Image" class="w-full h-48 object-cover">
-                <div class="p-4">
-                    <h2 class="text-lg font-semibold text-gray-800">Article Title 2</h2>
-                    <p class="text-gray-600 mt-2">This is a brief description of the article to give an overview of the content.</p>
-                    <div class="mt-4 flex justify-between items-center">
-                        <span class="text-gray-500 text-sm">By Author Name</span>
-                        <span class="text-gray-500 text-sm">2023-01-02</span>
-                    </div>
-                    <div class="flex items-center mt-4">
-                        <button class="text-green-600 mr-2">👍</button>
-                        <span class="text-gray-500 text-sm">Upvotes: 7</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Article Card 3 -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <img src="https://via.placeholder.com/400x200" alt="Article Image" class="w-full h-48 object-cover">
-                <div class="p-4">
-                    <h2 class="text-lg font-semibold text-gray-800">Article Title 3</h2>
-                    <p class="text-gray-600 mt-2">This is a brief description of the article to give an overview of the content.</p>
-                    <div class="mt-4 flex justify-between items-center">
-                        <span class="text-gray-500 text-sm">By Author Name</span>
-                        <span class="text-gray-500 text-sm">2023-01-03</span>
-                    </div>
-                    <div class="flex items-center mt-4">
-                        <button class="text-green-600 mr-2">👍</button>
-                        <span class="text-gray-500 text-sm">Upvotes: 5</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Add more article cards as needed -->
-
+            <?php endforeach; ?>
         </div>
+
+        <?php if ($totalArticles > $articlesPerPage): ?>
+        <div id="pagination" class="flex justify-center mt-6">
+            <button id="prevPage" data-page="<?= $currentArticlePage - 1 ?>" class="px-4 py-2 border rounded <?= ($currentArticlePage == 1 ? 'opacity-50 cursor-not-allowed' : '') ?>">Previous</button>
+            <span class="mx-2">Page <?= $currentArticlePage ?> of <?= $totalPages ?></span>
+            <button id="nextPage" data-page="<?= $currentArticlePage + 1 ?>" class="px-4 py-2 border rounded <?= ($currentArticlePage == $totalPages ? 'opacity-50 cursor-not-allowed' : '') ?>">Next</button>
+        </div>
+        <?php endif; ?>
     </main>
 
     <footer class="bg-white p-4 shadow-md mt-6">
@@ -104,6 +80,22 @@
             <p class="text-gray-600">© 2023 Article Hub. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        $(document).ready(function() {
+            $('#prevPage').click(function() {
+                const page = $(this).data('page');
+                if (page < 1) return;
+                window.location.href = '?page=' + page;
+            });
+
+            $('#nextPage').click(function() {
+                const page = $(this).data('page');
+                if (page > <?= $totalPages ?>) return;
+                window.location.href = '?page=' + page;
+            });
+        });
+    </script>
 
 </body>
 </html>

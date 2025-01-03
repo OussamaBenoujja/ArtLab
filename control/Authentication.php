@@ -12,7 +12,7 @@ class Authentication {
 
     // Register a new user
     public function register($username, $firstName, $lastName, $email, $password, $userType, $birthday, $bio = null) {
-        // Hash the password
+        
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
         $query = "INSERT INTO " . $this->table_name . " 
@@ -51,7 +51,8 @@ class Authentication {
             return [
                 "success" => true,
                 "token" => $token,
-                "user" => $user
+                "user" => $user,
+                "user_id" => $user['UserID']
             ];
         }
 

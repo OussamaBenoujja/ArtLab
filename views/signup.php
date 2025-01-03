@@ -23,9 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
 
     try {
         
-        $auth = new Authentication($pdo); // $pdo is the database connection
-
-
+        $auth = new Authentication($pdo); 
+        
         $success = $auth->register($username, $firstName, $lastName, $email, $password, $accountType, $bday, "No Bio");
 
         if ($success) {

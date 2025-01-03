@@ -1,0 +1,21 @@
+Array
+(
+    [token] => 982a11bd9753c0b217022ee116b89fe9
+    [user] => Array
+        (
+            [UserID] => 2
+            [Username] => youness
+            [FirstName] => youness
+            [LastName] => bousmhali
+            [Email] => bouchta01@gmail.com
+            [Password] => $2y$12$shobpkui2tbR/igY8xPhkO3wDu7uw75a.N8VRxPh7Bj9I7AZBORGW
+            [UserType] => Author
+            [DateOfJoining] => 2025-01-03 10:31:05
+            [Birthday] => 2025-01-16
+            [Bio] => No Bio
+            [token_auth] => 4b37c86a23f775c27a165ba1dd134293
+            [ProfileImage] => ../assets/img/default.jpg
+        )
+
+    [user_id] => 2
+)

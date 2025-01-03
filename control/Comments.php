@@ -1,4 +1,5 @@
 <?php
+
 // Comments.php
 require_once "Database.php";
 

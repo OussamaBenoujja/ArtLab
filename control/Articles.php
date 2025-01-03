@@ -4,7 +4,7 @@ require_once "Database.php";
 
 class Articles {
     private $conn;
-    private $table_name = "Articles";
+    private $view_name = "ArticleDetailsView"; 
 
     public function __construct($db) {
         $this->conn = $db;
@@ -12,7 +12,7 @@ class Articles {
 
     // Create an article
     public function createArticle($authorID, $bannerImage, $title, $innerText) {
-        $query = "INSERT INTO " . $this->table_name . " 
+        $query = "INSERT INTO Articles 
                   (AuthorID, BannerImage, Title, InnerText) 
                   VALUES (:authorID, :bannerImage, :title, :innerText)";
         $stmt = $this->conn->prepare($query);
@@ -27,7 +27,7 @@ class Articles {
 
     // Get all articles
     public function getAllArticles() {
-        $query = "SELECT * FROM " . $this->table_name;
+        $query = "SELECT * FROM " . $this->view_name;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -35,16 +35,16 @@ class Articles {
 
     // Get article by ID
     public function getArticleByID($articleID) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE ArticleID = :articleID";
+        $query = "SELECT * FROM " . $this->view_name . " WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':articleID', $articleID);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Update article
+    // Update article (only updates the Articles table)
     public function updateArticle($articleID, $title, $innerText) {
-        $query = "UPDATE " . $this->table_name . " SET Title = :title, InnerText = :innerText WHERE ArticleID = :articleID";
+        $query = "UPDATE Articles SET Title = :title, InnerText = :innerText WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':innerText', $innerText);
@@ -52,11 +52,22 @@ class Articles {
         return $stmt->execute();
     }
 
-    // Delete article
+    // Delete article (deletes from Articles table)
     public function deleteArticle($articleID) {
-        $query = "DELETE FROM " . $this->table_name . " WHERE ArticleID = :articleID";
+        $query = "DELETE FROM Articles WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':articleID', $articleID);
         return $stmt->execute();
+    }
+
+    // Search articles by title or inner text
+    public function searchArticles($searchTerm) {
+        $query = "SELECT * FROM " . $this->view_name . " 
+                  WHERE Title LIKE :term OR InnerText LIKE :term";
+        $stmt = $this->conn->prepare($query);
+        $term = "%" . $searchTerm . "%"; // Adding wildcards for partial matching
+        $stmt->bindParam(':term', $term);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all matching articles
     }
 }
