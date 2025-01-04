@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Process the banner image
-        $uploadDir = 'uploads/';
+        $uploadDir = '../assets/img';
         $fileExtension = strtolower(pathinfo($_FILES['bannerImage']['name'], PATHINFO_EXTENSION));
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
 

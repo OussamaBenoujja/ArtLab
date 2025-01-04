@@ -2,6 +2,15 @@
 require_once "../control/Database.php"; 
 require_once "../control/Articles.php"; 
 
+
+
+// if (!isset($_SESSION['user_id']) || $_SESSION['user']['UserType'] !== 'Member') {
+//     header('Location: login.php');
+//     exit();
+//  }
+
+
+
 $db = new Database(); 
 $articles = new Articles($db->getConnection()); 
 
@@ -40,6 +49,7 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
                     <li><a href="#" class="text-gray-600 hover:text-blue-600">Home</a></li>
                     <li><a href="#" class="text-gray-600 hover:text-blue-600">Profile</a></li>
                     <li><a href="#" class="text-gray-600 hover:text-blue-600">About</a></li>
+                    <li><a href="logout.php" class="text-gray-600 hover:text-blue-600">LogOut</a></li>
                 </ul>
             </nav>
         </div>
@@ -59,7 +69,7 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
                     <p class="text-gray-600 mt-2"><?= htmlspecialchars($article['InnerText']) ?></p>
                     <div class="mt-4 flex justify-between items-center">
                         <span class="text-gray-500 text-sm">By <?= htmlspecialchars($article['AuthorName']) ?></span>
-                        <span class="text-gray-500 text-sm"><?= htmlspecialchars($article['CreatedAt']) ?></span>
+                        <span class="text-gray-500 text-sm"><?= htmlspecialchars(substr($article['ArticleCreatedAt'], 0, 10)) ?></span>
                     </div>
                 </div>
             </div>

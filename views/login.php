@@ -5,6 +5,12 @@ session_start();
 require_once '../control/Database.php'; 
 require_once '../control/Authentication.php';
 
+
+if(isset($_SESSION['user_id'])){
+    header('Location: home.php');
+}
+
+
 $database = new Database();
 $pdo = $database->getConnection();
 

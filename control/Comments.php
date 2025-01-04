@@ -27,7 +27,7 @@ class Comments {
 
     // Retrieve all comments for a specific article
     public function getCommentsByArticle($articleID) {
-        $query = "SELECT c.CommentID, c.CommentText, c.CreatedAt, u.Username 
+        $query = "SELECT c.CommentID, c.CommentText, c.CreatedAt, u.Username, c.UserID
                   FROM " . $this->table_name . " c 
                   JOIN Users u ON c.UserID = u.UserID 
                   WHERE c.ArticleID = :articleID 
