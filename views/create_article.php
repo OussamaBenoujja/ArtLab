@@ -9,10 +9,10 @@ file_put_contents('session_log.txt', print_r($_SESSION, true));
 $stdout = fopen('php://stdout', 'w');
 fwrite($stdout, $_SESSION['user_id']);
 fclose($stdout);
-// if (!isset($_SESSION['user_id']) || $_SESSION['user']['role'] !== 'Author') {
-//     header('Location: login.php');
-//     exit();
-// }
+if (!isset($_SESSION['user_id']) || $_SESSION['user']['UserType'] !== 'Author') {
+    header('Location: login.php');
+    exit();
+ }
 
 
 $db = new Database();
