@@ -43,12 +43,13 @@ class Articles {
     }
 
     // Update article (only updates the Articles table)
-    public function updateArticle($articleID, $title, $innerText) {
-        $query = "UPDATE Articles SET Title = :title, InnerText = :innerText WHERE ArticleID = :articleID";
+    public function updateArticle($articleID, $title, $innerText, $bannerPath) {
+        $query = "UPDATE Articles SET Title = :title, InnerText = :innerText, BannerImage = :imgPath WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':innerText', $innerText);
         $stmt->bindParam(':articleID', $articleID);
+        $stmt->bindParam(':imgPath', $bannerPath);
         return $stmt->execute();
     }
 

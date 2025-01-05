@@ -72,6 +72,7 @@ $existingCategories = $categories->getAllCategories();
             <li><a href="#authors" class="side-link block py-2 hover:bg-gray-700 rounded">Authors</a></li>
             <li><a href="#articles" class="side-link block py-2 hover:bg-gray-700 rounded">Articles</a></li>
             <li><a href="#categories" class="side-link block py-2 hover:bg-gray-700 rounded">Categories</a></li>
+            <li><a href="logout.php" class="side-link block py-2 hover:bg-gray-700 rounded">Logout</a></li>
         </ul>
     </div>
 

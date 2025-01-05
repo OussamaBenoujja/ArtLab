@@ -13,8 +13,8 @@ class Users {
     // Create a new user
     public function createUser($username, $firstName, $lastName, $email, $password, $userType, $birthday, $bio = null) {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (Username, FirstName, LastName, Email, Password, UserType, Birthday, Bio) 
-                  VALUES (:username, :firstName, :lastName, :email, :password, :userType, :birthday, :bio)";
+                  (Username, FirstName, LastName, Email, Password, UserType, Birthday, Bio, IsBanned) 
+                  VALUES (:username, :firstName, :lastName, :email, :password, :userType, :birthday, :bio, 'no')";
         $stmt = $this->conn->prepare($query);
         
         $stmt->bindParam(':username', $username);
@@ -43,7 +43,7 @@ class Users {
         $query = "SELECT * FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all users
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // Update user
@@ -77,6 +77,22 @@ class Users {
         $term = "%" . $searchTerm . "%"; // Adding wildcards for partial matching
         $stmt->bindParam(':term', $term);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all matching users
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Ban user
+    public function banUser($userID) {
+        $query = "UPDATE " . $this->table_name . " SET IsBanned = 'yes' WHERE UserID = :userID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':userID', $userID);
+        return $stmt->execute();
+    }
+
+    // Unban user
+    public function unbanUser($userID) {
+        $query = "UPDATE " . $this->table_name . " SET IsBanned = 'no' WHERE UserID = :userID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':userID', $userID);
+        return $stmt->execute();
     }
 }
