@@ -42,6 +42,15 @@ class Articles {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    // Get articles by AuthorID
+    public function getArticlesByAuthorID($authorID) {
+        $query = "SELECT * FROM Articles WHERE AuthorID = :authorID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':authorID', $authorID);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Update article (only updates the Articles table)
     public function updateArticle($articleID, $title, $innerText, $bannerPath) {
         $query = "UPDATE Articles SET Title = :title, InnerText = :innerText, BannerImage = :imgPath WHERE ArticleID = :articleID";
@@ -55,6 +64,25 @@ class Articles {
 
     // Delete article (deletes from Articles table)
     public function deleteArticle($articleID) {
+        
+        $query = "DELETE FROM Votes WHERE ArticleID = :articleID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':articleID', $articleID);
+        $stmt->execute();
+    
+       
+        $query = "DELETE FROM Comments WHERE ArticleID = :articleID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':articleID', $articleID);
+        $stmt->execute();
+    
+        
+        $query = "DELETE FROM LikedArticles WHERE ArticleID = :articleID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':articleID', $articleID);
+        $stmt->execute();
+    
+        
         $query = "DELETE FROM Articles WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':articleID', $articleID);
@@ -66,9 +94,18 @@ class Articles {
         $query = "SELECT * FROM " . $this->view_name . " 
                   WHERE Title LIKE :term OR InnerText LIKE :term";
         $stmt = $this->conn->prepare($query);
-        $term = "%" . $searchTerm . "%"; // Adding wildcards for partial matching
+        $term = "%" . $searchTerm . "%"; 
         $stmt->bindParam(':term', $term);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all matching articles
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); 
+    }
+
+
+    public function getArticlesByCategory($categoryID) {
+        $query = "SELECT * FROM ArticleDetailsView WHERE CategoryID = :categoryID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':categoryID', $categoryID);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

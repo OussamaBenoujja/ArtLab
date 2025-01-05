@@ -1,30 +1,26 @@
 <?php
+session_start();
 require_once "../control/Database.php"; 
 require_once "../control/Articles.php"; 
-
-
-
-// if (!isset($_SESSION['user_id']) || $_SESSION['user']['UserType'] !== 'Member') {
-//     header('Location: login.php');
-//     exit();
-//  }
-
-
 
 $db = new Database(); 
 $articles = new Articles($db->getConnection()); 
 
+$selectedCategory = isset($_GET['category']) ? (int)$_GET['category'] : null;
 
-$allArticles = $articles->getAllArticles();
+if ($selectedCategory) {
+    $allArticles = $articles->getArticlesByCategory($selectedCategory); 
+} else {
+    $allArticles = $articles->getAllArticles();
+}
+
 $totalArticles = count($allArticles); 
-
 
 $articlesPerPage = 9;
 $totalPages = ceil($totalArticles / $articlesPerPage);
 $currentArticlePage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $currentArticlePage = max(1, min($totalPages, $currentArticlePage)); 
 $offset = ($currentArticlePage - 1) * $articlesPerPage;
-
 
 $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
 ?>
@@ -46,17 +42,44 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
             <h1 class="text-2xl font-bold text-gray-800">Article Hub</h1>
             <nav>
                 <ul class="flex space-x-4">
-                    <li><a href="#" class="text-gray-600 hover:text-blue-600">Home</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-blue-600">Profile</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-blue-600">About</a></li>
-                    <li><a href="logout.php" class="text-gray-600 hover:text-blue-600">LogOut</a></li>
+                    <li><a href="home.php" class="text-gray-600 hover:text-blue-600">Home</a></li>
+                    <?php if (isset($_SESSION['user'])): ?>
+                        <li><a href="profile.php" class="text-gray-600 hover:text-blue-600">Profile</a></li>
+                        <?php if ($_SESSION['user']['UserType'] === 'Admin'): ?>
+                            <li><a href="dashboard.php" class="text-gray-600 hover:text-blue-600">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="logout.php" class="text-gray-600 hover:text-blue-600">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="login.php" class="text-gray-600 hover:text-blue-600">Login</a></li>
+                        <li><a href="signup.php" class="text-gray-600 hover:text-blue-600">Signup</a></li>
+                    <?php endif; ?>
                 </ul>
             </nav>
         </div>
     </header>
 
+    <div class="max-w-7xl mx-auto p-6">
+        <form id="categoryFilterForm" class="mb-6">
+            <label for="category" class="block text-sm font-medium text-gray-700">Filter by Category</label>
+            <select id="category" name="category" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                <option value="">All Categories</option>
+                <?php
+                $query = "SELECT * FROM Categories";
+                $stmt = $db->getConnection()->prepare($query);
+                $stmt->execute();
+                $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($categories as $category): ?>
+                    <option value="<?= htmlspecialchars($category['CategoryID']) ?>" <?= (isset($_GET['category']) && $_GET['category'] == $category['CategoryID']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($category['CategoryName']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
+    </div>
+
     <main class="max-w-7xl mx-auto p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="articlesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <?php foreach ($currentArticles as $article): ?>
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <img src="<?= htmlspecialchars($article['BannerImage']) ?>" alt="Article Image" class="w-full h-48 object-cover">
@@ -66,7 +89,7 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
                             <?= htmlspecialchars($article['Title']) ?>
                         </a>
                     </h2>
-                    <p class="text-gray-600 mt-2"><?= htmlspecialchars($article['InnerText']) ?></p>
+                    <p class="text-gray-600 mt-2 article-text"><?= htmlspecialchars($article['InnerText']) ?></p>
                     <div class="mt-4 flex justify-between items-center">
                         <span class="text-gray-500 text-sm">By <?= htmlspecialchars($article['AuthorName']) ?></span>
                         <span class="text-gray-500 text-sm"><?= htmlspecialchars(substr($article['ArticleCreatedAt'], 0, 10)) ?></span>
@@ -93,16 +116,51 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
 
     <script>
         $(document).ready(function() {
-            $('#prevPage').click(function() {
-                const page = $(this).data('page');
-                if (page < 1) return;
-                window.location.href = '?page=' + page;
+            $('.article-text').each(function() {
+                const originalText = $(this).text();
+                if (originalText.length > 50) {
+                    const truncatedText = originalText.substring(0, 50) + " ... ";
+                    $(this).text(truncatedText);
+                    $(this).append('<a href="#" class="text-blue-600 hover:underline see-more">See More</a>');
+                    $(this).data('full-text', originalText);
+                }
             });
 
-            $('#nextPage').click(function() {
+            $(document).on('click', '.see-more', function(e) {
+                e.preventDefault();
+                const fullText = $(this).parent().data('full-text');
+                $(this).parent().text(fullText);
+            });
+
+            $('#category').change(function() {
+                const categoryID = $(this).val();
+                $.ajax({
+                    url: 'fetch_articles.php',
+                    type: 'GET',
+                    data: { category: categoryID },
+                    success: function(response) {
+                        $('#articlesGrid').html(response);
+                    },
+                    error: function(xhr) {
+                        alert('An error occurred while fetching articles.');
+                    }
+                });
+            });
+
+            $('#prevPage, #nextPage').click(function() {
                 const page = $(this).data('page');
-                if (page > <?= $totalPages ?>) return;
-                window.location.href = '?page=' + page;
+                const categoryID = $('#category').val();
+                $.ajax({
+                    url: 'fetch_articles.php',
+                    type: 'GET',
+                    data: { category: categoryID, page: page },
+                    success: function(response) {
+                        $('#articlesGrid').html(response);
+                    },
+                    error: function(xhr) {
+                        alert('An error occurred while fetching articles.');
+                    }
+                });
             });
         });
     </script>

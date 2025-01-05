@@ -4,31 +4,29 @@ session_start();
 // Include necessary files
 require_once '../control/Database.php';
 require_once '../control/Users.php';
+require_once '../control/Articles.php'; // Include the Articles class
 
 $database = new Database();
 $pdo = $database->getConnection();
 
 if (isset($_SESSION['user'])) {
-    $user = $_SESSION['user']; // Accessing user details from session
-    $userID = $user['UserID']; // Assuming UserID is part of the user session
+    $user = $_SESSION['user']; 
+    $userID = $user['UserID']; 
 
-    // Create an instance of the Users class
+    // Create instances of the Users and Articles classes
     $users = new Users($pdo);
+    $articles = new Articles($pdo); // Create an instance of the Articles class
 
     // Fetch user details
     $userDetails = $users->getUserByID($userID);
 
     if (!$userDetails) {
         echo "User not found.";
-        exit; // Stop further execution
+        exit; 
     }
 
     // Fetch the articles authored by the user
-    $query = "SELECT * FROM Articles WHERE AuthorID = :authorID";
-    $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':authorID', $userID);
-    $stmt->execute();
-    $userArticles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $userArticles = $articles->getArticlesByAuthorID($userID); // Use the new function
 
     // Fetch liked articles
     $likedQuery = "SELECT Articles.ArticleID, Articles.Title 
@@ -40,7 +38,6 @@ if (isset($_SESSION['user'])) {
     $likedStmt->execute();
     $likedArticles = $likedStmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
-    // Redirect to login page if not authenticated
     header('Location: login.php');
     exit;
 }
@@ -85,6 +82,34 @@ if (isset($_SESSION['user'])) {
                 <?php endforeach; ?>
             </ul>
         </div>
+
+        <!-- Articles Table for Authors -->
+        <?php if ($userDetails['UserType'] === 'Author'): ?>
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">My Articles</h2>
+                <table class="min-w-full bg-white border border-gray-300">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b">Title</th>
+                            <th class="py-2 px-4 border-b">Created At</th>
+                            <th class="py-2 px-4 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($userArticles as $article): ?>
+                            <tr>
+                                <td class="py-2 px-4 border-b"><?= htmlspecialchars($article['Title']) ?></td>
+                                <td class="py-2 px-4 border-b"><?= htmlspecialchars($article['CreatedAt']) ?></td>
+                                <td class="py-2 px-4 border-b">
+                                    <a href="update_article.php?id=<?= htmlspecialchars($article['ArticleID']) ?>" class="px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">Update</a>
+                                    <button onclick="deleteArticle(<?= htmlspecialchars($article['ArticleID']) ?>)" class="px-2 py-1 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Modal -->
@@ -127,7 +152,7 @@ if (isset($_SESSION['user'])) {
                 const formData = new FormData(this);
 
                 $.ajax({
-                    url: 'update_profile.php', // URL to the update script
+                    url: 'update_profile.php', 
                     type: 'POST',
                     data: formData,
                     contentType: false,
@@ -135,7 +160,7 @@ if (isset($_SESSION['user'])) {
                     success: function(response) {
                         alert(response);
                         if (response.success) {
-                            location.reload(); // Reload to see updated info
+                            location.reload(); 
                         }
                     },
                     error: function(xhr) {
@@ -144,6 +169,28 @@ if (isset($_SESSION['user'])) {
                 });
             });
         });
+
+        function deleteArticle(articleID) {
+            if (confirm('Are you sure you want to delete this article?')) {
+                $.ajax({
+                    url: 'delete_article.php',
+                    type: 'POST',
+                    data: { articleID: articleID },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'deleted') {
+                            alert('Article deleted successfully!');
+                            location.reload(); // Reload the page to reflect the changes
+                        } else {
+                            alert('Failed to delete the article.');
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('An error occurred while deleting the article.');
+                    }
+                });
+            }
+        }
     </script>
 </body>
 </html>
