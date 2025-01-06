@@ -1,10 +1,10 @@
 <?php
 session_start();
 
-// Include necessary files
+
 require_once '../control/Database.php';
 require_once '../control/Users.php';
-require_once '../control/Articles.php'; // Include the Articles class
+require_once '../control/Articles.php'; 
 
 $database = new Database();
 $pdo = $database->getConnection();
@@ -13,11 +13,11 @@ if (isset($_SESSION['user'])) {
     $user = $_SESSION['user']; 
     $userID = $user['UserID']; 
 
-    // Create instances of the Users and Articles classes
+    
     $users = new Users($pdo);
-    $articles = new Articles($pdo); // Create an instance of the Articles class
+    $articles = new Articles($pdo); 
 
-    // Fetch user details
+    
     $userDetails = $users->getUserByID($userID);
 
     if (!$userDetails) {
@@ -25,10 +25,7 @@ if (isset($_SESSION['user'])) {
         exit; 
     }
 
-    // Fetch the articles authored by the user
-    $userArticles = $articles->getArticlesByAuthorID($userID); // Use the new function
-
-    // Fetch liked articles
+    $userArticles = $articles->getArticlesByAuthorID($userID); 
     $likedQuery = "SELECT Articles.ArticleID, Articles.Title 
                    FROM LikedArticles 
                    JOIN Articles ON LikedArticles.ArticleID = Articles.ArticleID 

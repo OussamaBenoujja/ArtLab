@@ -11,26 +11,40 @@ class Authentication {
     }
 
     // Register a new user
-    public function register($username, $firstName, $lastName, $email, $password, $userType, $birthday, $bio = null) {
-        
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-        $query = "INSERT INTO " . $this->table_name . " 
-                  (Username, FirstName, LastName, Email, Password, UserType, Birthday, Bio) 
-                  VALUES (:username, :firstName, :lastName, :email, :password, :userType, :birthday, :bio)";
-
-        $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':firstName', $firstName);
-        $stmt->bindParam(':lastName', $lastName);
-        $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':password', $hashedPassword);
-        $stmt->bindParam(':userType', $userType);
-        $stmt->bindParam(':birthday', $birthday);
-        $stmt->bindParam(':bio', $bio);
-
-        return $stmt->execute();
+    public function register($username, $firstName, $lastName, $email, $password, $userType, $birthday, $bio = null, $profileImage = '../assets/img/default.jpg') {
+        try {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+    
+            // Include ProfileImage in the SQL query
+            $query = "INSERT INTO " . $this->table_name . " 
+                      (Username, FirstName, LastName, Email, Password, UserType, Birthday, Bio, ProfileImage) 
+                      VALUES (:username, :firstName, :lastName, :email, :password, :userType, :birthday, :bio, :profileImage)";
+    
+            $stmt = $this->conn->prepare($query);
+    
+            // Bind parameters
+            $stmt->bindParam(':username', $username);
+            $stmt->bindParam(':firstName', $firstName);
+            $stmt->bindParam(':lastName', $lastName);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':password', $hashedPassword);
+            $stmt->bindParam(':userType', $userType);
+            $stmt->bindParam(':birthday', $birthday);
+            $stmt->bindParam(':bio', $bio);
+            $stmt->bindParam(':profileImage', $profileImage); // Bind the profile image path
+    
+            // Execute the query
+            if ($stmt->execute()) {
+                return true;
+            } else {
+                // Log the error or handle it appropriately
+                $errorInfo = $stmt->errorInfo();
+                throw new Exception("Database error: " . $errorInfo[2]);
+            }
+        } catch (PDOException $e) {
+            // Log the exception or handle it appropriately
+            throw new Exception("Registration failed: " . $e->getMessage());
+        }
     }
 
     // User login

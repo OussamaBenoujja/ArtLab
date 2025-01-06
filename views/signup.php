@@ -8,11 +8,13 @@ require_once '../control/Database.php';
 require_once '../control/Authentication.php';
 
 
+
 $database = new Database();
 $pdo = $database->getConnection();
 
+$profileImagePath = '../assets/img/default.jpg';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
-    
     $username = htmlspecialchars(trim($_POST['username']));
     $email = htmlspecialchars(trim($_POST['email']));
     $bday = htmlspecialchars(trim($_POST['bday']));
@@ -21,20 +23,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
     $password = htmlspecialchars(trim($_POST['password']));
     $accountType = htmlspecialchars(trim($_POST['account_type']));
 
+    
+    $profileImagePath = '../assets/img/default.jpg';
+
+    
+    if (isset($_FILES['pfpImage']) && $_FILES['pfpImage']['error'] == 0) {
+        $targetDir = '../assets/img/';
+        $fileType = pathinfo($_FILES['pfpImage']['name'], PATHINFO_EXTENSION);
+        $fileName = uniqid() . '.' . $fileType;
+        $targetFilePath = $targetDir . $fileName;
+        $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
+
+        if (in_array(strtolower($fileType), $allowedTypes)) {
+            if (!file_exists($targetDir)) {
+                mkdir($targetDir, 0777, true);
+            }
+            
+            if (move_uploaded_file($_FILES['pfpImage']['tmp_name'], $targetFilePath)) {
+                $profileImagePath = '../assets/img/' . $fileName;
+                echo "File uploaded successfully: " . $profileImagePath;
+            } else {
+                echo "File upload failed.";
+            }
+        } else {
+            echo "Invalid file type. Only JPG, JPEG, PNG, and GIF are allowed.";
+        }
+    }
+
+    
+    echo "Profile Image Path: " . $profileImagePath;
+
     try {
-        
         $auth = new Authentication($pdo); 
-        
-        $success = $auth->register($username, $firstName, $lastName, $email, $password, $accountType, $bday, "No Bio");
+        $success = $auth->register($username, $firstName, $lastName, $email, $password, $accountType, $bday, "No Bio", $profileImagePath);
 
         if ($success) {
-            
             echo "<script>alert('Registration successful!'); window.location.href = 'login.php';</script>";
         } else {
             echo "<script>alert('Failed to register. Email or username may already be in use.');</script>";
         }
     } catch (Exception $e) {
-        
         echo "<script>alert('Error: " . $e->getMessage() . "');</script>";
     }
 }
@@ -57,15 +85,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
 
 <main class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
     <h1 class="text-2xl font-semibold text-center mb-6">Create Account</h1>
-    <form action='signup.php' method='POST' class="space-y-4">
+    <form action='signup.php' method='POST' enctype="multipart/form-data" class="space-y-4">
+        <div class='width-full flex justify-center'>
+        <img id='pfpPreview' class='rounded-lg w-20' src='../assets/img/default.jpg'>    
+    </div>
         <div>
             <label for='username' class="block text-sm font-medium text-gray-700">UserName</label>
             <input type='text' name='username' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
         </div>
         <div>
+            <label for='pfpImage' class="block text-sm font-medium text-gray-700">Profile Image</label>
+            <input id='imageUpload' type='file' accept="image/*" name='pfpImage' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
+        </div>
+        <div>
             <label for='email' class="block text-sm font-medium text-gray-700">Email</label>
             <input type='email' name='email' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
         </div>
+
         <div>
             <label for='bday' class="block text-sm font-medium text-gray-700">Birth Date</label>
             <input type='date' name='bday' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
@@ -94,4 +130,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
 </main>
 
 </body>
+
+
+<script>
+
+const imageInput = document.getElementById('imageUpload');
+const previewImage = document.getElementById('pfpPreview');
+
+
+imageInput.addEventListener('change', function(event) {
+
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewImage.src = "../assets/img/default.jpg";
+    }
+
+});
+
+</script>
+
+
+
 </html>

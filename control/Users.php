@@ -11,10 +11,10 @@ class Users {
     }
 
     // Create a new user
-    public function createUser($username, $firstName, $lastName, $email, $password, $userType, $birthday, $bio = null) {
+    public function createUser($username, $firstName, $lastName, $email, $password, $userType, $birthday, $bio = null, $pfp) {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (Username, FirstName, LastName, Email, Password, UserType, Birthday, Bio, IsBanned) 
-                  VALUES (:username, :firstName, :lastName, :email, :password, :userType, :birthday, :bio, 'no')";
+                  (Username, FirstName, LastName, Email, Password, UserType, Birthday, Bio, IsBanned, ProfileImage) 
+                  VALUES (:username, :firstName, :lastName, :email, :password, :userType, :birthday, :bio, 'no', :pfp)";
         $stmt = $this->conn->prepare($query);
         
         $stmt->bindParam(':username', $username);
@@ -25,6 +25,7 @@ class Users {
         $stmt->bindParam(':userType', $userType);
         $stmt->bindParam(':birthday', $birthday);
         $stmt->bindParam(':bio', $bio);
+        $stmt->bindParam(':pfp', $pfp);
         
         return $stmt->execute();
     }
@@ -47,12 +48,11 @@ class Users {
     }
 
     // Update user
-    public function updateUser($userID, $username, $bio, $profileImagePath = null) {
-        $query = "UPDATE " . $this->table_name . " SET Username = :username, Bio = :bio" . 
+    public function updateUser($userID, $username = null, $bio = null, $profileImagePath = null) {
+        $query = "UPDATE " . $this->table_name . " SET Bio = :bio" . 
                  ($profileImagePath ? ", ProfileImage = :profileImage" : "") . 
                  " WHERE UserID = :userID";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':username', $username);
         $stmt->bindParam(':bio', $bio);
         if ($profileImagePath) {
             $stmt->bindParam(':profileImage', $profileImagePath);

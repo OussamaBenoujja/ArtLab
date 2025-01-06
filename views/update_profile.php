@@ -14,31 +14,24 @@ if (isset($_SESSION['user'])) {
     $username = $_POST['username'];
     $bio = $_POST['bio'];
     
-    // Handle file upload
+    
     $profileImagePath = null;
     
     if (isset($_FILES['profileImage']) && $_FILES['profileImage']['error'] == 0) {
         $targetDir = '../assets/img/';
-        // Generate unique filename to prevent overwriting
+        
         $fileType = pathinfo($_FILES['profileImage']['name'], PATHINFO_EXTENSION);
         $fileName = uniqid() . '.' . $fileType;
         $targetFilePath = $targetDir . $fileName;
-        
-        // Allow specific file types
         $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
-        
+
         if (in_array(strtolower($fileType), $allowedTypes)) {
-            // Create directory if it doesn't exist
             if (!file_exists($targetDir)) {
                 mkdir($targetDir, 0777, true);
             }
             
-            // Move the uploaded file
             if (move_uploaded_file($_FILES['profileImage']['tmp_name'], $targetFilePath)) {
-                // Store relative path in database
                 $profileImagePath = '../assets/img/' . $fileName;
-                
-                // Delete old profile image if it exists and isn't the default
                 if (isset($user['ProfileImage']) && 
                     $user['ProfileImage'] !== '../assets/img/default.jpg' && 
                     file_exists($user['ProfileImage'])) {
@@ -60,9 +53,7 @@ if (isset($_SESSION['user'])) {
         }
     }
     
-    // Prepare to update user data
     $users = new Users($pdo);
-    
     try {
         $updateSuccess = $users->updateUser($userID, $username, $bio, $profileImagePath);
         
@@ -72,7 +63,6 @@ if (isset($_SESSION['user'])) {
             if ($profileImagePath) {
                 $_SESSION['user']['ProfileImage'] = $profileImagePath;
             }
-            
             echo json_encode([
                 'success' => true, 
                 'message' => 'Profile updated successfully',
