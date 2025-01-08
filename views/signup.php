@@ -1,13 +1,7 @@
-
-
-
-
 <?php
-
-require_once '../control/Database.php'; 
+require_once '../control/Database.php';
 require_once '../control/Authentication.php';
-
-
+require_once '../phpmailer/mailer.php'; // Include mailer.php
 
 $database = new Database();
 $pdo = $database->getConnection();
@@ -23,10 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
     $password = htmlspecialchars(trim($_POST['password']));
     $accountType = htmlspecialchars(trim($_POST['account_type']));
 
-    
     $profileImagePath = '../assets/img/default.jpg';
 
-    
     if (isset($_FILES['pfpImage']) && $_FILES['pfpImage']['error'] == 0) {
         $targetDir = '../assets/img/';
         $fileType = pathinfo($_FILES['pfpImage']['name'], PATHINFO_EXTENSION);
@@ -41,24 +33,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
             
             if (move_uploaded_file($_FILES['pfpImage']['tmp_name'], $targetFilePath)) {
                 $profileImagePath = '../assets/img/' . $fileName;
-                echo "File uploaded successfully: " . $profileImagePath;
-            } else {
-                echo "File upload failed.";
             }
-        } else {
-            echo "Invalid file type. Only JPG, JPEG, PNG, and GIF are allowed.";
         }
     }
 
-    
-    echo "Profile Image Path: " . $profileImagePath;
-
     try {
-        $auth = new Authentication($pdo); 
+        $auth = new Authentication($pdo);
         $success = $auth->register($username, $firstName, $lastName, $email, $password, $accountType, $bday, "No Bio", $profileImagePath);
 
         if ($success) {
-            echo "<script>alert('Registration successful!'); window.location.href = 'login.php';</script>";
+            if ($accountType === 'author') {
+                $subject = "Welcome, Author!";
+                $message = "Dear $firstName $lastName,\n\nThank you for signing up as an author on our art blog! We encourage you to start writing articles and sharing your knowledge with our community.\n\nBest regards,\nThe Art Blog Team";
+            } else {
+                $subject = "Welcome, Member!";
+                $message = "Dear $firstName $lastName,\n\nThank you for signing up as a member on our art blog! We encourage you to start reading articles and engaging with our community.\n\nBest regards,\nThe Art Blog Team";
+            }
+
+            $result = sendEmail($email, "$firstName $lastName", $subject, $message);
+
+            if ($result === true) {
+                echo "<script>alert('Registration successful! Please check your email for further instructions.'); window.location.href = 'login.php';</script>";
+            } else {
+                echo "<script>alert('Registration successful, but there was an error sending the email. $result'); window.location.href = 'login.php';</script>";
+            }
         } else {
             echo "<script>alert('Failed to register. Email or username may already be in use.');</script>";
         }
@@ -67,10 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
     }
 }
 ?>
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -82,13 +76,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-
 <main class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
     <h1 class="text-2xl font-semibold text-center mb-6">Create Account</h1>
     <form action='signup.php' method='POST' enctype="multipart/form-data" class="space-y-4">
         <div class='width-full flex justify-center'>
-        <img id='pfpPreview' class='rounded-lg w-20' src='../assets/img/default.jpg'>    
-    </div>
+            <img id='pfpPreview' class='rounded-lg w-20' src='../assets/img/default.jpg'>    
+        </div>
         <div>
             <label for='username' class="block text-sm font-medium text-gray-700">UserName</label>
             <input type='text' name='username' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
@@ -101,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
             <label for='email' class="block text-sm font-medium text-gray-700">Email</label>
             <input type='email' name='email' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
         </div>
-
         <div>
             <label for='bday' class="block text-sm font-medium text-gray-700">Birth Date</label>
             <input type='date' name='bday' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
@@ -128,18 +120,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
         <button type='submit' name='signup' class="w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition duration-150">Sign Up</button>
     </form>
 </main>
-
-</body>
-
-
 <script>
-
 const imageInput = document.getElementById('imageUpload');
 const previewImage = document.getElementById('pfpPreview');
 
-
 imageInput.addEventListener('change', function(event) {
-
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
@@ -151,11 +136,7 @@ imageInput.addEventListener('change', function(event) {
     } else {
         previewImage.src = "../assets/img/default.jpg";
     }
-
 });
-
 </script>
-
-
-
+</body>
 </html>

@@ -108,4 +108,21 @@ class Articles {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function addTag($articleID, $tagID) {
+        $query = "INSERT INTO ArticleTags (ArticleID, TagID) VALUES (:articleID, :tagID)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':articleID', $articleID);
+        $stmt->bindParam(':tagID', $tagID);
+        return $stmt->execute();
+    }
+
+    public function delTag(){
+        $query = "DELETE FROM ArticleTags WHERE ArticleID = :articleID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':articleID', $articleID);
+        return $stmt->execute();
+    }
+    
+
 }

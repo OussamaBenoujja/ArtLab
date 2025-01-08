@@ -85,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="bg-gray-100">
 
 <div class="flex h-screen">
-    <!-- Sidebar -->
     <div class="bg-gray-800 text-white w-1/4 p-5">
         <h2 class="text-xl font-bold mb-5">Admin Dashboard</h2>
         <ul>
@@ -96,10 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </ul>
     </div>
 
-    <!-- Main Content -->
     <div class="flex-1 p-6">
-
-        <!-- Members Table -->
         <div id="members" class="dashboard-section hidden">
             <h2 class="text-2xl font-bold mb-4">Members</h2>
             <table class="min-w-full bg-white rounded shadow mb-4">
@@ -113,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <tbody>
                 <?php foreach ($allUsers as $user): ?>
                     <tr data-user-id="<?php echo htmlspecialchars($user['UserID']); ?>">
-                        <td class="border px-4 py-2"><?php echo htmlspecialchars($user['Username']); ?></td>
+                        <td id="<?php echo htmlspecialchars($user['UserID']); ?>" class="border px-4 py-2"><?php echo htmlspecialchars($user['Username']); ?></td>
                         <td class="border px-4 py-2"><?php echo htmlspecialchars($user['Email']); ?></td>
                         <td class="border px-4 py-2">
                             <button class="bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700 delete-user">Delete</button>
@@ -124,7 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
         </div>
 
-        <!-- Articles Table -->
         <div id="articles" class="dashboard-section hidden">
             <h2 class="text-2xl font-bold mb-4">Articles</h2>
             <table class="min-w-full bg-white rounded shadow mb-4">
@@ -149,7 +144,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
         </div>
 
-        <!-- Categories Table -->
         <div id="categories" class="dashboard-section hidden">
             <h2 class="text-2xl font-bold mb-4">Categories</h2>
             <p class="text-green-600"><?php echo $categoryMessage; ?></p>
@@ -179,7 +173,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" name="add_category" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">Add Category</button>
             </form>
         </div>
-
     </div>
 </div>
 
@@ -198,7 +191,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
     });
 
-    // AJAX delete functionality for articles
     $(document).on('click', '.delete-article', function() {
         const row = $(this).closest('tr');
         const articleId = row.data('article-id');
@@ -206,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (confirm("Are you sure you want to delete this article?")) {
             $.ajax({
                 type: "POST",
-                url: window.location.href, // Use the same page to handle the AJAX request
+                url: window.location.href,
                 data: { delete_article: true, article_id: articleId },
                 dataType: "json",
                 success: function(response) {
@@ -215,17 +207,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $(this).remove();
                         });
                     } else {
-                        alert(response.message); 
+                        alert(response.message);
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error: ", status, error);
                     alert("An error occurred. Please try again.");
                 }
             });
         }
     });
 
-    // AJAX delete functionality for users
     $(document).on('click', '.delete-user', function() {
         const row = $(this).closest('tr');
         const userId = row.data('user-id');
@@ -233,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (confirm("Are you sure you want to delete this user?")) {
             $.ajax({
                 type: "POST",
-                url: window.location.href, // Use the same page to handle the AJAX request
+                url: window.location.href,
                 data: { delete_user: true, user_id: userId },
                 dataType: "json",
                 success: function(response) {
@@ -242,18 +234,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $(this).remove();
                         });
                     } else {
-                        alert(response.message); 
+                        alert(response.message);
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error: ", status, error);
                     alert("An error occurred. Please try again.");
                 }
             });
         }
     });
 
-    // Show Members section by default
     document.getElementById('members').classList.remove('hidden');
+
+    <?php foreach ($allUsers as $user): ?>
+        document.getElementById('<?php echo htmlspecialchars($user['UserID']); ?>').addEventListener('mouseover', function(event) {
+            let card = document.createElement('div');
+            card.id = 'usercard';
+            card.style.position = 'absolute';
+            card.style.top = `${event.clientY + 10}px`;
+            card.style.left = `${event.clientX + 10}px`;
+            card.style.backgroundColor = 'white';
+            card.style.border = '1px solid #ccc';
+            card.style.borderRadius = '5px';
+            card.style.padding = '10px';
+            card.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.1)';
+            card.style.zIndex = '1000';
+
+            card.innerHTML = `
+                <div class="flex flex-row gap-6 p-6 bg-white rounded-lg shadow-md">
+                    <img class="rounded-lg w-32 h-32 object-cover" src="<?php echo htmlspecialchars($user['ProfileImage']); ?>" alt="Profile Image">
+                    <div class="flex-1">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-700 font-medium">Username: <span class="font-normal"><?php echo htmlspecialchars($user['Username']); ?></span></p>
+                                <p class="text-gray-700 font-medium">Email: <span class="font-normal"><?php echo htmlspecialchars($user['Email']); ?></span></p>
+                                <p class="text-gray-700 font-medium">Role: <span class="font-normal"><?php echo htmlspecialchars($user['UserType']); ?></span></p>
+                                <p class="text-gray-700 font-medium">First Name: <span class="font-normal"><?php echo htmlspecialchars($user['FirstName']); ?></span></p>
+                                <p class="text-gray-700 font-medium">Last Name: <span class="font-normal"><?php echo htmlspecialchars($user['LastName']); ?></span></p>
+                            </div>
+                            <div>
+                                <p class="text-gray-700 font-medium">Date of Birth: <span class="font-normal"><?php echo htmlspecialchars($user['Birthday']); ?></span></p>
+                                <p class="text-gray-700 font-medium">Date of Joining: <span class="font-normal"><?php echo htmlspecialchars($user['DateOfJoining']); ?></span></p>
+                                <p class="text-gray-700 font-medium">Bio: <span class="font-normal"><?php echo htmlspecialchars($user['Bio']); ?></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(card);
+        });
+
+        document.getElementById('<?php echo htmlspecialchars($user['UserID']); ?>').addEventListener('mouseout', function() {
+            let card = document.getElementById('usercard');
+            if (card) {
+                card.remove();
+            }
+        });
+    <?php endforeach; ?>
 </script>
 
 </body>
