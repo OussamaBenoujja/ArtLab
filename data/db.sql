@@ -106,10 +106,26 @@ CREATE TABLE Categories (
     CategoryName VARCHAR(255) NOT NULL UNIQUE
 );
 
-
-
 ALTER TABLE Comments
 ADD CONSTRAINT fk_article_id FOREIGN KEY (ArticleID) REFERENCES Articles(ArticleID) ON DELETE CASCADE,
 ADD CONSTRAINT fk_user_id FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE;
 
 ALTER TABLE Users ADD COLUMN ProfileImage VARCHAR(255) DEFAULT '../assets/img/default.jpg';
+
+CREATE TABLE ArticleTags (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    article_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_article_tag (article_id, tag_id) 
+);
+
+
+CREATE TABLE Tags (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    name VARCHAR(255) NOT NULL UNIQUE, 
+    description TEXT, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+);
