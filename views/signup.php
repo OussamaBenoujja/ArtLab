@@ -8,7 +8,15 @@ $pdo = $database->getConnection();
 
 $profileImagePath = '../assets/img/default.jpg';
 
+// Boolean to control email functionality
+$enableEmail = false; 
+
+// Debugging: Check if the script is being accessed
+error_log("Script accessed.");
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
+    error_log("Form submitted.");
+
     $username = htmlspecialchars(trim($_POST['username']));
     $email = htmlspecialchars(trim($_POST['email']));
     $bday = htmlspecialchars(trim($_POST['bday']));
@@ -17,9 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
     $password = htmlspecialchars(trim($_POST['password']));
     $accountType = htmlspecialchars(trim($_POST['account_type']));
 
+    error_log("Username: $username, Email: $email, Account Type: $accountType");
+
     $profileImagePath = '../assets/img/default.jpg';
 
     if (isset($_FILES['pfpImage']) && $_FILES['pfpImage']['error'] == 0) {
+        error_log("Profile image uploaded.");
         $targetDir = '../assets/img/';
         $fileType = pathinfo($_FILES['pfpImage']['name'], PATHINFO_EXTENSION);
         $fileName = uniqid() . '.' . $fileType;
@@ -33,36 +44,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
             
             if (move_uploaded_file($_FILES['pfpImage']['tmp_name'], $targetFilePath)) {
                 $profileImagePath = '../assets/img/' . $fileName;
+                error_log("Profile image saved: $profileImagePath");
+            } else {
+                error_log("Failed to move uploaded file.");
             }
+        } else {
+            error_log("Invalid file type: $fileType");
         }
     }
 
     try {
+        error_log("Attempting to register user.");
         $auth = new Authentication($pdo);
         $success = $auth->register($username, $firstName, $lastName, $email, $password, $accountType, $bday, "No Bio", $profileImagePath);
 
         if ($success) {
-            if ($accountType === 'author') {
-                $subject = "Welcome, Author!";
-                $message = "Dear $firstName $lastName,\n\nThank you for signing up as an author on our art blog! We encourage you to start writing articles and sharing your knowledge with our community.\n\nBest regards,\nThe Art Blog Team";
-            } else {
-                $subject = "Welcome, Member!";
-                $message = "Dear $firstName $lastName,\n\nThank you for signing up as a member on our art blog! We encourage you to start reading articles and engaging with our community.\n\nBest regards,\nThe Art Blog Team";
-            }
+            error_log("User registration successful.");
+            if ($enableEmail) {
+                error_log("Email functionality enabled.");
+                if ($accountType === 'author') {
+                    $subject = "Welcome, Author!";
+                    $message = "Dear $firstName $lastName,\n\nThank you for signing up as an author on our art blog! We encourage you to start writing articles and sharing your knowledge with our community.\n\nBest regards,\nThe Art Blog Team";
+                } else {
+                    $subject = "Welcome, Member!";
+                    $message = "Dear $firstName $lastName,\n\nThank you for signing up as a member on our art blog! We encourage you to start reading articles and engaging with our community.\n\nBest regards,\nThe Art Blog Team";
+                }
 
-            $result = sendEmail($email, "$firstName $lastName", $subject, $message);
+                $result = sendEmail($email, "$firstName $lastName", $subject, $message);
 
-            if ($result === true) {
-                echo "<script>alert('Registration successful! Please check your email for further instructions.'); window.location.href = 'login.php';</script>";
+                if ($result === true) {
+                    error_log("Email sent successfully.");
+                    echo "<script>alert('Registration successful! Please check your email for further instructions.'); window.location.href = 'login.php';</script>";
+                } else {
+                    error_log("Email sending failed: $result");
+                    echo "<script>alert('Registration successful, but there was an error sending the email. $result'); window.location.href = 'login.php';</script>";
+                }
             } else {
-                echo "<script>alert('Registration successful, but there was an error sending the email. $result'); window.location.href = 'login.php';</script>";
+                error_log("Email functionality disabled.");
+                echo "<script>alert('Registration successful!'); window.location.href = 'login.php';</script>";
             }
         } else {
+            error_log("User registration failed.");
             echo "<script>alert('Failed to register. Email or username may already be in use.');</script>";
         }
     } catch (Exception $e) {
+        error_log("Error during registration: " . $e->getMessage());
         echo "<script>alert('Error: " . $e->getMessage() . "');</script>";
     }
+} else {
+    error_log("Form not submitted or signup button not pressed.");
 }
 ?>
 
@@ -83,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
             <img id='pfpPreview' class='rounded-lg w-20' src='../assets/img/default.jpg'>    
         </div>
         <div>
-            <label for='username' class="block text-sm font-medium text-gray-700">UserName</label>
+            <label for='username' class="block text-sm font-medium text-gray-700">Username</label>
             <input type='text' name='username' class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" required>
         </div>
         <div>
