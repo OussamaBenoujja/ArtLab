@@ -1,45 +1,49 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once "../control/Database.php";
 require_once "../control/Articles.php";
 require_once "../control/Catagories.php";
+require_once "../control/Tags.php";
 
 session_start();
 
-file_put_contents('session_log.txt', print_r($_SESSION, true));
-$stdout = fopen('php://stdout', 'w');
-fwrite($stdout, $_SESSION['user_id']);
-fclose($stdout);
-if (!isset($_SESSION['user_id']) || $_SESSION['user']['UserType'] !== 'Author') {
-    header('Location: login.php');
-    exit();
- }
 
+// if (!isset($_SESSION['user_id']) || $_SESSION['UserType'] !== 'Author') {
+//     header('Location: login.php');
+//     exit();
+// }
 
 $db = new Database();
 $conn = $db->getConnection();
 $articles = new Articles($conn);
 $categories = new Categories($conn);
-
+$tags = new Tags($conn);
 
 $availableCategories = $categories->getAllCategories();
+$availableTags = $tags->getAllTags();
 
+$response = ['success' => false, 'message' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = ['success' => false, 'message' => ''];
     
     try {
         // Validate inputs
-        if (empty($_POST['title']) || empty($_POST['content']) || empty($_POST['category'])) {
+        if (empty($_POST['title']) || empty($_POST['InnerText']) || empty($_POST['category'])) {
             throw new Exception('All fields are required');
         }
 
-        // Handle file upload
+        // Validate file upload
         if (!isset($_FILES['bannerImage']) || $_FILES['bannerImage']['error'] !== UPLOAD_ERR_OK) {
             throw new Exception('Banner image is required');
         }
 
-        // Process the banner image
-        $uploadDir = '../assets/img';
+        // Process file upload
+        $uploadDir = '../assets/img/';
         $fileExtension = strtolower(pathinfo($_FILES['bannerImage']['name'], PATHINFO_EXTENSION));
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
 
@@ -54,24 +58,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Failed to upload image');
         }
 
-        // Create the article
-        $result = $articles->createArticle(
+        // Create article
+        $articleID = $articles->createArticle(
             $_SESSION['user_id'],
             $uploadPath,
             $_POST['title'],
-            $_POST['content']
+            $_POST['InnerText'],
+            $_POST['category'] 
         );
 
-        if ($result) {
-            $response = ['success' => true, 'message' => 'Article created successfully'];
-        } else {
+        if (!$articleID) {
             throw new Exception('Failed to create article');
         }
+
+        // Add tags to the article (if tags are selected)
+        if (!empty($_POST['tags'])) {
+            foreach ($_POST['tags'] as $tagID) {
+                $articles->addTag($articleID, $tagID);
+            }
+        }
+
+        $response = ['success' => true, 'message' => 'Article created successfully'];
 
     } catch (Exception $e) {
         $response = ['success' => false, 'message' => $e->getMessage()];
     }
 
+    // Return JSON response for AJAX requests
     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
         header('Content-Type: application/json');
@@ -104,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form id="articleForm" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row h-screen">
         <div class="left-column w-full md:w-2/3 bg-gray-200 p-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Article Content</h2>
-            <textarea name="content" class="article-content w-full border rounded p-2 focus:outline-none focus:ring focus:ring-blue-200" placeholder="Write your article here..." required></textarea>
+            <textarea name="InnerText" class="article-content w-full border rounded p-2 focus:outline-none focus:ring focus:ring-blue-200" placeholder="Write your article here..." required></textarea>
         </div>
         <div class="right-column w-full md:w-1/3 bg-gray-300 p-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Other Details</h2>
@@ -124,6 +137,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
             <div class="mb-4">
+                <label for="tags" class="block text-gray-700 font-medium mb-2">Tags</label>
+                <select id="tags" name="tags[]" class="border rounded p-2 w-full focus:outline-none focus:ring focus:ring-blue-200" multiple>
+                    <?php foreach ($availableTags as $tag): ?>
+                        <option value="<?php echo htmlspecialchars($tag['TagID']); ?>">
+                            <?php echo htmlspecialchars($tag['TagName']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="mb-4">
                 <label for="bannerImage" class="block text-gray-700 font-medium mb-2">Upload Banner Image</label>
                 <input type="file" id="bannerImage" name="bannerImage" accept="image/*" class="border rounded p-2 w-full focus:outline-none focus:ring focus:ring-blue-200" required>
             </div>
@@ -136,35 +159,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="text-gray-600">Copyright &copy; <?php echo date('Y'); ?> Article Hub. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        document.getElementById('articleForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            
-            try {
-                const response = await fetch(window.location.href, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Article created successfully!');
-                    window.location.href = 'articles.php';
-                } else {
-                    alert('Error: ' + result.message);
-                }
-            } catch (error) {
-                alert('Error submitting article. Please try again.');
-                console.error('Error:', error);
-            }
-        });
-    </script>
 </body>
 </html>
