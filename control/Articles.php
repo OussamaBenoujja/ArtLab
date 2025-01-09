@@ -79,7 +79,7 @@ class Articles {
         $title = $title ?? $this->title;
         $content = $content ?? $this->content;
         $categoryID = $categoryID ?? $this->categoryID;
-
+    
         $query = "INSERT INTO Articles (AuthorID, BannerImage, Title, InnerText, CreatedAt, CategoryID) 
                   VALUES (:authorID, :bannerImage, :title, :content, NOW(), :categoryID)";
         $stmt = $this->conn->prepare($query);
@@ -88,13 +88,14 @@ class Articles {
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':content', $content);
         $stmt->bindParam(':categoryID', $categoryID);
-
+    
         if ($stmt->execute()) {
-            return $this->conn->lastInsertId();
+            // Set the ArticleID after insertion
+            $this->articleID = $this->conn->lastInsertId();
+            return $this->articleID; // Return the new ArticleID
         }
         throw new Exception("Failed to create article.");
     }
-
     // Get all articles
     public function getAllArticles() {
         $query = "
@@ -146,6 +147,7 @@ class Articles {
                 articles.Title,
                 articles.InnerText,
                 articles.BannerImage,
+                articles.IsBanned AS isban,
                 articles.CreatedAt AS ArticleCreatedAt,
                 users.UserID AS AuthorID,
                 CONCAT(users.FirstName, ' ', users.LastName) AS AuthorName,
@@ -255,7 +257,6 @@ class Articles {
         }
     }
 
-    // Search articles by title or inner text
     public function searchArticles($searchTerm) {
         $query = "
             SELECT 
@@ -266,36 +267,14 @@ class Articles {
                 articles.CreatedAt AS ArticleCreatedAt,
                 users.UserID AS AuthorID,
                 CONCAT(users.FirstName, ' ', users.LastName) AS AuthorName,
-                users.Username AS AuthorUsername,
-                users.Email AS AuthorEmail,
-                GROUP_CONCAT(DISTINCT votes.VoteType) AS VoteTypes,
-                GROUP_CONCAT(DISTINCT comments.CommentText) AS Comments,
-                GROUP_CONCAT(DISTINCT categories.CategoryName) AS Categories,
-                GROUP_CONCAT(DISTINCT tags.TagName) AS Tags
+                users.Email AS AuthorEmail
             FROM 
                 articles
                 LEFT JOIN users ON articles.AuthorID = users.UserID
-                LEFT JOIN votes ON articles.ArticleID = votes.ArticleID
-                LEFT JOIN comments ON articles.ArticleID = comments.ArticleID
-                LEFT JOIN articlecategories ON articles.ArticleID = articlecategories.ArticleID
-                LEFT JOIN categories ON articlecategories.CategoryID = categories.CategoryID
-                LEFT JOIN articletags ON articles.ArticleID = articletags.ArticleID
-                LEFT JOIN tags ON articletags.TagID = tags.TagID
             WHERE 
                 articles.Title LIKE :term OR 
                 users.Username LIKE :term OR 
                 CONCAT(users.FirstName, ' ', users.LastName) LIKE :term
-            GROUP BY 
-                articles.ArticleID,
-                articles.Title,
-                articles.InnerText,
-                articles.BannerImage,
-                articles.CreatedAt,
-                users.UserID,
-                users.FirstName,
-                users.LastName,
-                users.Username,
-                users.Email
         ";
         $stmt = $this->conn->prepare($query);
         $term = "%" . $searchTerm . "%";
@@ -304,7 +283,6 @@ class Articles {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Get articles by category
     public function getArticlesByCategory($categoryID) {
         $query = "
             SELECT 
@@ -315,32 +293,12 @@ class Articles {
                 articles.CreatedAt AS ArticleCreatedAt,
                 users.UserID AS AuthorID,
                 CONCAT(users.FirstName, ' ', users.LastName) AS AuthorName,
-                users.Email AS AuthorEmail,
-                GROUP_CONCAT(DISTINCT votes.VoteType) AS VoteTypes,
-                GROUP_CONCAT(DISTINCT comments.CommentText) AS Comments,
-                GROUP_CONCAT(DISTINCT categories.CategoryName) AS Categories,
-                GROUP_CONCAT(DISTINCT tags.TagName) AS Tags
+                users.Email AS AuthorEmail
             FROM 
                 articles
                 LEFT JOIN users ON articles.AuthorID = users.UserID
-                LEFT JOIN votes ON articles.ArticleID = votes.ArticleID
-                LEFT JOIN comments ON articles.ArticleID = comments.ArticleID
-                LEFT JOIN articlecategories ON articles.ArticleID = articlecategories.ArticleID
-                LEFT JOIN categories ON articlecategories.CategoryID = categories.CategoryID
-                LEFT JOIN articletags ON articles.ArticleID = articletags.ArticleID
-                LEFT JOIN tags ON articletags.TagID = tags.TagID
             WHERE 
-                categories.CategoryID = :categoryID
-            GROUP BY 
-                articles.ArticleID,
-                articles.Title,
-                articles.InnerText,
-                articles.BannerImage,
-                articles.CreatedAt,
-                users.UserID,
-                users.FirstName,
-                users.LastName,
-                users.Email
+                articles.CategoryID = :categoryID
         ";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':categoryID', $categoryID);
@@ -349,7 +307,7 @@ class Articles {
     }
 
     // Add a tag to an article
-    public function addTag($articleID = null, $tagID) {
+    public function addTag($tagID, $articleID = null) {
         $articleID = $articleID ?? $this->articleID;
 
         // Check if the ArticleID exists
@@ -381,7 +339,7 @@ class Articles {
     }
 
     // Remove a tag from an article
-    public function removeTag($articleID = null, $tagID) {
+    public function removeTag($tagID, $articleID = null) {
         $articleID = $articleID ?? $this->articleID;
 
         $query = "DELETE FROM ArticleTags WHERE ArticleID = :articleID AND TagID = :tagID";
@@ -406,7 +364,7 @@ class Articles {
     }
 
     // Set article category
-    public function setArticleCategory($articleID = null, $categoryID) {
+    public function setArticleCategory($categoryID, $articleID = null) {
         $articleID = $articleID ?? $this->articleID;
 
         // Check if the ArticleID exists

@@ -136,4 +136,12 @@ class Comments {
 
         return $stmt->execute();
     }
+
+    public function getCommentByID($commentID) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE CommentID = :commentID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':commentID', $commentID);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

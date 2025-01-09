@@ -1,8 +1,5 @@
 
 
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,7 +33,7 @@
           The page you are looking for doesn't exist. Here are some helpful links:
         </p>
         <div class="mt-6 flex w-full shrink-0 items-center gap-x-3 sm:w-auto">
-          <button
+          <button href='home.php'
             class="flex w-1/2 items-center justify-center gap-x-2 rounded-lg border bg-white px-5 py-2 text-sm text-gray-700 transition-colors duration-200 hover:bg-gray-100 sm:w-auto dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
             type="button">
             <span class="w-24px h-24px h-5 w-5 rtl:rotate-180">
@@ -52,7 +49,7 @@
             </span>
             <span>Go back</span>
           </button>
-          <button
+          <button href='home.php'
             class="bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-500 w-1/2 shrink-0 rounded-lg px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 sm:w-auto"
             type="button">
             <span>Take me home</span>

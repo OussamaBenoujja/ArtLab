@@ -1,22 +1,31 @@
 <?php
+
+session_start();
+
 require_once "../control/Database.php";
 require_once "../control/Users.php";
 require_once "../control/Articles.php";
 require_once "../control/Catagories.php";
 require_once "../control/Tags.php"; 
 
+
+if ($_SESSION['user']['UserType'] !== 'Admin') {
+    header('Location: login.php');
+    exit();
+}
+
 $db = new Database();
 $users = new Users($db->getConnection());
 $articles = new Articles($db->getConnection());
 $categories = new Categories($db->getConnection());
-$tags = new Tags($db->getConnection()); // Initialize the Tags class
+$tags = new Tags($db->getConnection()); 
 
 $categoryMessage = '';
 $tagMessage = '';
 $allUsers = $users->getAllUsers(); 
 $allArticles = $articles->getAllArticles(); 
 $existingCategories = $categories->getAllCategories(); 
-$existingTags = $tags->getAllTags(); // Fetch all tags
+$existingTags = $tags->getAllTags(); 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_category'])) {
@@ -130,6 +139,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['status' => 'error', 'message' => 'Failed to unban user.']);
         }
         exit();
+    }
+    if (isset($_POST['add_tag'])) {
+        $newTagName = htmlspecialchars($_POST['new_tag_name']);
+        if ($tags->createTag($newTagName)) {
+            $tagMessage = "Tag '$newTagName' added successfully.";
+        } else {
+            $tagMessage = "Failed to add tag.";
+        }
     }
 }
 ?>
@@ -295,7 +312,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endforeach; ?>
         </tbody>
     </table>
-</div>
+        <!-- Add Tag Form -->
+        <form method="POST">
+        <input type="text" name="new_tag_name" class="border rounded p-2 w-1/3 mb-4" placeholder="New Tag Name" required>
+        <button type="submit" name="add_tag" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">Add Tag</button>
+    </form>
+    </div>
     </div>
 </div>
 

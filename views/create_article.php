@@ -11,7 +11,6 @@ require_once "../control/Tags.php";
 
 session_start();
 
-
 // if (!isset($_SESSION['user_id']) || $_SESSION['UserType'] !== 'Author') {
 //     header('Location: login.php');
 //     exit();
@@ -51,6 +50,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Invalid file type. Only JPG, JPEG, PNG, and GIF files are allowed.');
         }
 
+        // Ensure the upload directory exists and is writable
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true)) {
+                throw new Exception('Failed to create upload directory');
+            }
+        }
+
+        if (!is_writable($uploadDir)) {
+            throw new Exception('Upload directory is not writable');
+        }
+
         $fileName = uniqid() . '.' . $fileExtension;
         $uploadPath = $uploadDir . $fileName;
 
@@ -64,17 +74,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadPath,
             $_POST['title'],
             $_POST['InnerText'],
-            $_POST['category'] 
+            $_POST['category']
         );
 
         if (!$articleID) {
             throw new Exception('Failed to create article');
         }
 
+        // Debugging: Print the ArticleID
+        echo "Created ArticleID: " . $articleID;
+
         // Add tags to the article (if tags are selected)
         if (!empty($_POST['tags'])) {
             foreach ($_POST['tags'] as $tagID) {
-                $articles->addTag($articleID, $tagID);
+                $articles->addTag($tagID, $articleID); // Correct order: $tagID first, then $articleID
             }
         }
 
