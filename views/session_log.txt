@@ -1,22 +1,22 @@
 Array
 (
-    [token] => e84d03db78a023c63206e12294e05e2f
+    [token] => f47972acc12d249bd4eb7a4c3d1a4c15
     [user] => Array
         (
-            [UserID] => 1
-            [Username] => Osama
-            [FirstName] => Oussama
-            [LastName] => Benoujja
-            [Email] => osama2code79@gmail.com
-            [Password] => $2y$12$k4GLc2GsxpNc456mqIHyYes5K1MTPIRzVdEkGV0/l9Yex401doOG2
-            [UserType] => Member
-            [DateOfJoining] => 2025-01-03 03:53:12
-            [Birthday] => 2025-01-22
-            [Bio] => Was the making of this Project that hard.
-Short Awnser Yes
-            [token_auth] => 313689e0a1fc82e8254d3a198c3634d2
-            [ProfileImage] => ../assets/img/Ren_amamiya_.jpg
+            [UserID] => 2
+            [Username] => youness
+            [FirstName] => youness
+            [LastName] => bousmhali
+            [Email] => bouchta01@gmail.com
+            [Password] => $2y$12$shobpkui2tbR/igY8xPhkO3wDu7uw75a.N8VRxPh7Bj9I7AZBORGW
+            [UserType] => Author
+            [DateOfJoining] => 2025-01-03 10:31:05
+            [Birthday] => 2025-01-16
+            [Bio] => No Bio
+            [token_auth] => e114275780b49a10a0f4d2abebe93d3c
+            [ProfileImage] => ../assets/img/default.jpg
+            [IsBanned] => no
         )
 
-    [user_id] => 1
+    [user_id] => 2
 )
