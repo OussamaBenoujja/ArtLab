@@ -14,7 +14,6 @@ $categories = new Categories($conn);
 $comments = new Comments($conn);
 $votes = new Votes($conn);
 
-
 if (!isset($_GET['articleID'])) {
     header("Location: index.php");
     exit();
@@ -28,7 +27,6 @@ if (!$article) {
     exit();
 }
 
-
 if (isset($_POST['vote']) && isset($_SESSION['user_id'])) {
     $voteType = $_POST['vote'] === 'upvote' ? 'Upvote' : 'Downvote';
     $votes->addVote($_SESSION['user_id'], $articleID, $voteType);
@@ -36,17 +34,14 @@ if (isset($_POST['vote']) && isset($_SESSION['user_id'])) {
     exit();
 }
 
-
 if (isset($_POST['action']) && isset($_SESSION['user_id'])) {
     $commentID = $_POST['comment_id'] ?? null;
     
     if ($_POST['action'] === 'delete') {
-       
         if ($_SESSION['user']['UserType'] === 'Admin' || $_POST['comment_user_id'] == $_SESSION['user_id']) {
             $comments->deleteComment($commentID, $_POST['comment_user_id']);
         }
     } elseif ($_POST['action'] === 'edit' && $_POST['comment_user_id'] == $_SESSION['user_id']) {
-        
         $newText = trim($_POST['edited_comment']);
         if (!empty($newText)) {
             $comments->updateComment($commentID, $_SESSION['user_id'], $newText);
@@ -55,7 +50,6 @@ if (isset($_POST['action']) && isset($_SESSION['user_id'])) {
     header("Location: article.php?articleID=" . $articleID);
     exit();
 }
-
 
 if (isset($_POST['comment']) && isset($_SESSION['user_id'])) {
     $commentText = trim($_POST['comment']);
@@ -66,10 +60,8 @@ if (isset($_POST['comment']) && isset($_SESSION['user_id'])) {
     exit();
 }
 
-
 $voteCounts = $votes->countVotes($articleID);
 $netVotes = ($voteCounts['Upvotes'] ?? 0) - ($voteCounts['Downvotes'] ?? 0);
-
 
 $userVote = null;
 if (isset($_SESSION['user_id'])) {
@@ -103,7 +95,25 @@ $articleComments = $comments->getCommentsByArticle($articleID);
             <header class="relative">
                 <img src="<?php echo htmlspecialchars($article['BannerImage']); ?>" alt="Article Banner" class="w-full h-64 object-cover">
                 <div class="absolute inset-0 bg-black bg-opacity-25 flex items-center justify-between p-4">
-                    <h1 class="text-white text-4xl font-bold"><?php echo htmlspecialchars($article['Title']); ?></h1>
+                    <div>
+                        <h1 class="text-white text-4xl font-bold"><?php echo htmlspecialchars($article['Title']); ?></h1>
+                        <!-- Display Category -->
+                        <?php if (!empty($article['CategoryName'])): ?>
+                            <div class="mt-2">
+                                <span class="bg-blue-500 text-white px-2 py-1 rounded text-sm">
+                                    Category: <?php echo htmlspecialchars($article['CategoryName']); ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                        <!-- Display Tags -->
+                        <?php if (!empty($article['Tags'])): ?>
+                            <div class="mt-2">
+                                <span class="bg-green-500 text-white px-2 py-1 rounded text-sm">
+                                    Tags: <?php echo htmlspecialchars($article['Tags']); ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                     <div class="flex items-center space-x-2">
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <form method="POST" class="flex space-x-2">
@@ -215,7 +225,7 @@ $articleComments = $comments->getCommentsByArticle($articleID);
         <aside class="w-1/4 bg-white p-4 shadow">
             <h2 class="text-xl font-semibold mb-4">Author</h2>
             <div class="flex items-center mb-4">
-                <img src="<?php echo htmlspecialchars($article['AuthorProfileImage'] ?? '../assets/img/default.jpg'); ?>" 
+                <img src="<?php echo htmlspecialchars($article['ProfileImage'] ?? '../assets/img/default.jpg'); ?>" 
                      alt="Profile Picture" class="rounded-full w-20 h-20 mr-4 object-cover">
                 <div>
                     <h3 class="font-bold"><?php echo htmlspecialchars($article['AuthorName']); ?></h3>
