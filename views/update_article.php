@@ -2,6 +2,7 @@
 require_once "../control/Database.php";
 require_once "../control/Articles.php";
 require_once "../control/Catagories.php";
+require_once "../control/Tags.php";
 
 session_start();
 
@@ -19,6 +20,7 @@ $db = new Database();
 $conn = $db->getConnection();
 $articles = new Articles($conn);
 $categories = new Categories($conn);
+$tags = new Tags($conn);
 
 $articleID = $_GET['id'];
 $article = $articles->getArticleByID($articleID);
@@ -29,6 +31,8 @@ if (!$article || $article['AuthorID'] !== $_SESSION['user_id']) {
 }
 
 $availableCategories = $categories->getAllCategories();
+$availableTags = $tags->getAllTags();
+$currentTags = $tags->getTagsForArticle($articleID); // Fetch current tags for the article
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = ['success' => false, 'message' => ''];
@@ -124,8 +128,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select id="category" name="category" class="border rounded p-2 w-full focus:outline-none focus:ring focus:ring-blue-200" required>
                     <option value="">Select a category</option>
                     <?php foreach ($availableCategories as $category): ?>
-                        <option value="<?php echo htmlspecialchars($category['CategoryID']); ?>">
+                        <option value="<?php echo htmlspecialchars($category['CategoryID']); ?>" <?php echo ($category['CategoryID'] == $article['CategoryID']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($category['CategoryName']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="tags" class="block text-gray-700 font-medium mb-2">Tags</label>
+                <select id="tags" name="tags[]" class="border rounded p-2 w-full focus:outline-none focus:ring focus:ring-blue-200" multiple>
+                    <?php foreach ($availableTags as $tag): ?>
+                        <option value="<?php echo htmlspecialchars($tag['TagID']); ?>" <?php echo in_array($tag['TagID'], array_column($currentTags, 'TagID')) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($tag['TagName']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -148,31 +162,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </footer>
 
     <script>
-        document.getElementById('articleForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            
+        // Handle tag updates dynamically
+        const tagsSelect = document.getElementById('tags');
+        const articleID = <?php echo $articleID; ?>;
+
+        tagsSelect.addEventListener('change', async (e) => {
+            const selectedTags = Array.from(tagsSelect.selectedOptions).map(option => option.value);
+
             try {
-                const response = await fetch(window.location.href, {
+                const response = await fetch('update_tags.php', {
                     method: 'POST',
-                    body: formData,
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        articleID: articleID,
+                        tags: selectedTags
+                    }),
                 });
-                
+
                 const result = await response.json();
-                
-                if (result.success) {
-                    alert('Article updated successfully!');
-                    window.location.href = 'profile.php';
-                } else {
-                    alert('Error: ' + result.message);
+
+                if (!result.success) {
+                    alert('Error updating tags: ' + result.message);
                 }
             } catch (error) {
-                alert('Error updating article. Please try again.');
                 console.error('Error:', error);
+                alert('Error updating tags. Please try again.');
             }
         });
     </script>
