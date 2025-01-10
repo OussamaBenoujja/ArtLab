@@ -10,7 +10,6 @@ if(isset($_SESSION['user_id'])){
     header('Location: home.php');
 }
 
-
 $database = new Database();
 $pdo = $database->getConnection();
 
@@ -45,7 +44,26 @@ if(isset($_POST['login'])){
     <title>Login</title>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-
+<header class="bg-white shadow-md p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Article Hub</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="home.php" class="text-gray-600 hover:text-blue-600">Home</a></li>
+                    <?php if (isset($_SESSION['user'])): ?>
+                        <li><a href="profile.php" class="text-gray-600 hover:text-blue-600">Profile</a></li>
+                        <?php if ($_SESSION['user']['UserType'] === 'Admin'): ?>
+                            <li><a href="dashboard.php" class="text-gray-600 hover:text-blue-600">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="logout.php" class="text-gray-600 hover:text-blue-600">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="login.php" class="text-gray-600 hover:text-blue-600">Login</a></li>
+                        <li><a href="signup.php" class="text-gray-600 hover:text-blue-600">Signup</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+    </header>
     <main class="bg-white shadow-md rounded-lg p-8 w-96">
         <h2 class="text-2xl font-bold text-center mb-6">Log In</h2>
         <form method="POST" action="login.php" class="flex flex-col gap-4">
