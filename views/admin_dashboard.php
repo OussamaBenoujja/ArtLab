@@ -3,16 +3,20 @@ require_once "../control/Database.php";
 require_once "../control/Users.php";
 require_once "../control/Articles.php";
 require_once "../control/Catagories.php";
+require_once "../control/Tags.php"; 
 
 $db = new Database();
 $users = new Users($db->getConnection());
 $articles = new Articles($db->getConnection());
 $categories = new Categories($db->getConnection());
+$tags = new Tags($db->getConnection()); // Initialize the Tags class
 
 $categoryMessage = '';
+$tagMessage = '';
 $allUsers = $users->getAllUsers(); 
 $allArticles = $articles->getAllArticles(); 
 $existingCategories = $categories->getAllCategories(); 
+$existingTags = $tags->getAllTags(); // Fetch all tags
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_category'])) {
@@ -70,6 +74,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit();
     }
+
+    if (isset($_POST['delete_tag'])) {
+        header('Content-Type: application/json');
+    
+        if (!isset($_POST['tag_id']) || !is_numeric($_POST['tag_id'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid tag ID.']);
+            exit();
+        }
+    
+        $tagId = intval($_POST['tag_id']);
+    
+        if ($tags->deleteTag($tagId)) {
+            echo json_encode(['status' => 'success', 'message' => 'Tag deleted successfully.']);
+        } else {
+            error_log("Failed to delete tag with ID: $tagId");
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete tag.']);
+        }
+        exit();
+    }
+
+    if (isset($_POST['ban_user'])) {
+        header('Content-Type: application/json');
+
+        if (!isset($_POST['user_id']) || !is_numeric($_POST['user_id'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid user ID.']);
+            exit();
+        }
+
+        $user_Id = intval($_POST['user_id']);
+
+        if ($users->banUser($user_Id)) {
+            echo json_encode(['status' => 'success', 'message' => 'User banned successfully.']);
+        } else {
+            error_log("Failed to ban user with ID: $user_Id");
+            echo json_encode(['status' => 'error', 'message' => 'Failed to ban user.']);
+        }
+        exit();
+    }
+
+    if (isset($_POST['unban_user'])) {
+        header('Content-Type: application/json');
+
+        if (!isset($_POST['user_id']) || !is_numeric($_POST['user_id'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid user ID.']);
+            exit();
+        }
+
+        $user_Id = intval($_POST['user_id']);
+
+        if ($users->unbanUser($user_Id)) {
+            echo json_encode(['status' => 'success', 'message' => 'User unbanned successfully.']);
+        } else {
+            error_log("Failed to unban user with ID: $user_Id");
+            echo json_encode(['status' => 'error', 'message' => 'Failed to unban user.']);
+        }
+        exit();
+    }
 }
 ?>
 
@@ -91,11 +152,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <li><a href="#members" class="side-link block py-2 hover:bg-gray-700 rounded">Members</a></li>
             <li><a href="#articles" class="side-link block py-2 hover:bg-gray-700 rounded">Articles</a></li>
             <li><a href="#categories" class="side-link block py-2 hover:bg-gray-700 rounded">Categories</a></li>
+            <li><a href="#tags" class="side-link block py-2 hover:bg-gray-700 rounded">Tags</a></li>
             <li><a href="logout.php" class="side-link block py-2 hover:bg-gray-700 rounded">Logout</a></li>
         </ul>
     </div>
 
     <div class="flex-1 p-6">
+        <!-- Members Section -->
         <div id="members" class="dashboard-section hidden">
             <h2 class="text-2xl font-bold mb-4">Members</h2>
             <table class="min-w-full bg-white rounded shadow mb-4">
@@ -103,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <tr class="w-full bg-blue-600 text-white">
                     <th class="py-2">Username</th>
                     <th class="py-2">Email</th>
+                    <th class="py-2">Status</th>
                     <th class="py-2">Actions</th>
                 </tr>
                 </thead>
@@ -112,7 +176,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <td id="<?php echo htmlspecialchars($user['UserID']); ?>" class="border px-4 py-2"><?php echo htmlspecialchars($user['Username']); ?></td>
                         <td class="border px-4 py-2"><?php echo htmlspecialchars($user['Email']); ?></td>
                         <td class="border px-4 py-2">
-                            <button class="bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700 delete-user">Delete</button>
+                            <?php echo $user['IsBanned'] === 'yes' ? '<span class="text-red-500">Banned</span>' : '<span class="text-green-500">Active</span>'; ?>
+                        </td>
+                        <td class="border px-4 py-2">
+                            <?php if ($user['IsBanned'] === 'yes'): ?>
+                                <button class="unban-user bg-green-500 text-white py-1 px-3 rounded hover:bg-green-700">Unban</button>
+                            <?php else: ?>
+                                <button class="ban-user bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700">Ban</button>
+                            <?php endif; ?>
+                            <button class="delete-user bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700">Delete</button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -120,6 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
         </div>
 
+        <!-- Articles Section -->
         <div id="articles" class="dashboard-section hidden">
             <h2 class="text-2xl font-bold mb-4">Articles</h2>
             <table class="min-w-full bg-white rounded shadow mb-4">
@@ -144,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
         </div>
 
+        <!-- Categories Section -->
         <div id="categories" class="dashboard-section hidden">
             <h2 class="text-2xl font-bold mb-4">Categories</h2>
             <p class="text-green-600"><?php echo $categoryMessage; ?></p>
@@ -173,6 +247,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" name="add_category" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">Add Category</button>
             </form>
         </div>
+
+<!-- Tags Section -->
+<div id="tags" class="dashboard-section hidden">
+    <h2 class="text-2xl font-bold mb-4">Tags</h2>
+    <p class="text-green-600"><?php echo $tagMessage; ?></p>
+
+    <!-- Most Associated Tags in Last 30 Days -->
+    <h3 class="text-xl font-bold mt-6 mb-4">Most Associated Tags (Last 30 Days)</h3>
+    <table class="min-w-full bg-white rounded shadow mb-4">
+        <thead>
+            <tr class="w-full bg-blue-600 text-white">
+                <th class="py-2">Tag Name</th>
+                <th class="py-2">Association Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Fetch the most associated tags in the last 30 days (top 5)
+            $mostAssociatedTags = $articles->getMostAssociatedTagsLast30Days(5);
+            foreach ($mostAssociatedTags as $tag): ?>
+                <tr>
+                    <td class="border px-4 py-2"><?php echo htmlspecialchars($tag['TagName']); ?></td>
+                    <td class="border px-4 py-2"><?php echo htmlspecialchars($tag['AssociationCount']); ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <!-- Existing Tags Table -->
+    <h3 class="text-xl font-bold mt-6 mb-4">All Tags</h3>
+    <table class="min-w-full bg-white rounded shadow mb-4">
+        <thead>
+            <tr class="w-full bg-blue-600 text-white">
+                <th class="py-2">Tag Name</th>
+                <th class="py-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($existingTags as $tag): ?>
+                <tr data-tag-id="<?php echo htmlspecialchars($tag['TagID']); ?>">
+                    <td class="border px-4 py-2"><?php echo htmlspecialchars($tag['TagName']); ?></td>
+                    <td class="border px-4 py-2">
+                        <button class="delete-tag bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700">Delete</button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
     </div>
 </div>
 
@@ -233,6 +356,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         row.fadeOut(300, function() {
                             $(this).remove();
                         });
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error: ", status, error);
+                    alert("An error occurred. Please try again.");
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.delete-tag', function() {
+        const row = $(this).closest('tr');
+        const tagId = row.data('tag-id');
+
+        if (confirm("Are you sure you want to delete this tag?")) {
+            $.ajax({
+                type: "POST",
+                url: window.location.href,
+                data: { delete_tag: true, tag_id: tagId },
+                dataType: "json",
+                success: function(response) {
+                    if (response.status === 'success') {
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error: ", status, error);
+                    alert("An error occurred. Please try again.");
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.ban-user', function() {
+        const row = $(this).closest('tr');
+        const userId = row.data('user-id');
+
+        if (confirm("Are you sure you want to ban this user?")) {
+            $.ajax({
+                type: "POST",
+                url: window.location.href,
+                data: { ban_user: true, user_id: userId },
+                dataType: "json",
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Update the row to show the Unban button
+                        row.find('td:nth-child(3)').html('<span class="text-red-500">Banned</span>');
+                        row.find('td:nth-child(4)').html(`
+                            <button class="unban-user bg-green-500 text-white py-1 px-3 rounded hover:bg-green-700">Unban</button>
+                            <button class="delete-user bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700">Delete</button>
+                        `);
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error: ", status, error);
+                    alert("An error occurred. Please try again.");
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.unban-user', function() {
+        const row = $(this).closest('tr');
+        const userId = row.data('user-id');
+
+        if (confirm("Are you sure you want to unban this user?")) {
+            $.ajax({
+                type: "POST",
+                url: window.location.href,
+                data: { unban_user: true, user_id: userId },
+                dataType: "json",
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Update the row to show the Ban button
+                        row.find('td:nth-child(3)').html('<span class="text-green-500">Active</span>');
+                        row.find('td:nth-child(4)').html(`
+                            <button class="ban-user bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700">Ban</button>
+                            <button class="delete-user bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700">Delete</button>
+                        `);
                     } else {
                         alert(response.message);
                     }
