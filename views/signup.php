@@ -1,17 +1,16 @@
 <?php
 require_once '../control/Database.php';
 require_once '../control/Authentication.php';
-require_once '../phpmailer/mailer.php'; // Include mailer.php
+require_once '../phpmailer/mailer.php'; /
 
 $database = new Database();
 $pdo = $database->getConnection();
 
 $profileImagePath = '../assets/img/default.jpg';
 
-// Boolean to control email functionality
+// Email functionality
 $enableEmail = false; 
 
-// Debugging: Check if the script is being accessed
 error_log("Script accessed.");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['signup'])) {
