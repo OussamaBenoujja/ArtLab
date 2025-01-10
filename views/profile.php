@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 require_once '../control/Database.php';
 require_once '../control/Users.php';
 require_once '../control/Articles.php'; 
@@ -50,8 +49,32 @@ if (isset($_SESSION['user'])) {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100">
 
+<header class="bg-white shadow-md p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Article Hub</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="home.php" class="text-gray-600 hover:text-blue-600">Home</a></li>
+                    <?php if (isset($_SESSION['user'])): ?>
+                        <li><a href="profile.php" class="text-gray-600 hover:text-blue-600">Profile</a></li>
+                        <?php if ($_SESSION['user']['UserType'] === 'Admin'): ?>
+                            <li><a href="dashboard.php" class="text-gray-600 hover:text-blue-600">Dashboard</a></li>
+                        <?php endif; ?>
+                        <?php if ($_SESSION['user']['UserType'] === 'Author'): ?>
+                            <li><a href="create_article.php" class="text-gray-600 hover:text-blue-600">Create Article</a></li>
+                        <?php endif; ?>
+                        <li><a href="logout.php" class="text-gray-600 hover:text-blue-600">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="login.php" class="text-gray-600 hover:text-blue-600">Login</a></li>
+                        <li><a href="signup.php" class="text-gray-600 hover:text-blue-600">Signup</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="flex items-center justify-center min-h-screen">
     <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-lg">
         <div class="flex flex-col items-center mb-4">
             <img src="<?= htmlspecialchars($userDetails['ProfileImage'] ?? 'default.jpg') ?>" alt="Profile Image" class="w-24 h-24 rounded-full shadow-md mb-4">
@@ -108,7 +131,7 @@ if (isset($_SESSION['user'])) {
             </div>
         <?php endif; ?>
     </div>
-
+</div>
     <!-- Modal -->
     <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-md">
@@ -177,7 +200,7 @@ if (isset($_SESSION['user'])) {
                     success: function(response) {
                         if (response.status === 'deleted') {
                             alert('Article deleted successfully!');
-                            location.reload(); // Reload the page to reflect the changes
+                            location.reload(); 
                         } else {
                             alert('Failed to delete the article.');
                         }
