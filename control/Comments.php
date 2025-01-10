@@ -7,12 +7,59 @@ class Comments {
     private $conn;
     private $table_name = "Comments";
 
-    public function __construct($db) {
+    // Properties
+    private $commentID;
+    private $articleID;
+    private $userID;
+    private $commentText;
+
+    public function __construct($db, $commentID = null, $articleID = null, $userID = null, $commentText = null) {
         $this->conn = $db;
+        $this->commentID = $commentID;
+        $this->articleID = $articleID;
+        $this->userID = $userID;
+        $this->commentText = $commentText;
+    }
+
+    // Getters and Setters
+    public function getCommentID() {
+        return $this->commentID;
+    }
+
+    public function setCommentID($commentID) {
+        $this->commentID = $commentID;
+    }
+
+    public function getArticleID() {
+        return $this->articleID;
+    }
+
+    public function setArticleID($articleID) {
+        $this->articleID = $articleID;
+    }
+
+    public function getUserID() {
+        return $this->userID;
+    }
+
+    public function setUserID($userID) {
+        $this->userID = $userID;
+    }
+
+    public function getCommentText() {
+        return $this->commentText;
+    }
+
+    public function setCommentText($commentText) {
+        $this->commentText = $commentText;
     }
 
     // Add a new comment
-    public function addComment($articleID, $userID, $commentText) {
+    public function addComment($articleID = null, $userID = null, $commentText = null) {
+        $articleID = $articleID ?? $this->articleID;
+        $userID = $userID ?? $this->userID;
+        $commentText = $commentText ?? $this->commentText;
+
         $query = "INSERT INTO " . $this->table_name . " (ArticleID, UserID, CommentText, CreatedAt) 
                   VALUES (:articleID, :userID, :commentText, NOW())";
 
@@ -56,7 +103,11 @@ class Comments {
     }
 
     // Update a comment
-    public function updateComment($commentID, $userID, $newCommentText) {
+    public function updateComment($commentID = null, $userID = null, $newCommentText = null) {
+        $commentID = $commentID ?? $this->commentID;
+        $userID = $userID ?? $this->userID;
+        $newCommentText = $newCommentText ?? $this->commentText;
+
         $query = "UPDATE " . $this->table_name . " 
                   SET CommentText = :newCommentText, CreatedAt = NOW() 
                   WHERE CommentID = :commentID AND UserID = :userID";
@@ -71,7 +122,10 @@ class Comments {
     }
 
     // Delete a comment
-    public function deleteComment($commentID, $userID) {
+    public function deleteComment($commentID = null, $userID = null) {
+        $commentID = $commentID ?? $this->commentID;
+        $userID = $userID ?? $this->userID;
+
         $query = "DELETE FROM " . $this->table_name . " 
                   WHERE CommentID = :commentID AND UserID = :userID";
 
