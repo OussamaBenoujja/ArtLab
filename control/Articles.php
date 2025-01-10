@@ -3,13 +3,83 @@ require_once "Database.php";
 
 class Articles {
     private $conn;
-    private $view_name = "ArticleDetailsView"; 
+    private $view_name = "ArticleDetailsView";
 
-    public function __construct($db) {
+    // Properties
+    private $articleID;
+    private $authorID;
+    private $bannerImage;
+    private $title;
+    private $content;
+    private $categoryID;
+
+    public function __construct($db, $articleID = null, $authorID = null, $bannerImage = null, $title = null, $content = null, $categoryID = null) {
         $this->conn = $db;
+        $this->articleID = $articleID;
+        $this->authorID = $authorID;
+        $this->bannerImage = $bannerImage;
+        $this->title = $title;
+        $this->content = $content;
+        $this->categoryID = $categoryID;
     }
 
-    public function createArticle($authorID, $bannerImage, $title, $content, $categoryID) {
+    // Getters and Setters
+    public function getArticleID() {
+        return $this->articleID;
+    }
+
+    public function setArticleID($articleID) {
+        $this->articleID = $articleID;
+    }
+
+    public function getAuthorID() {
+        return $this->authorID;
+    }
+
+    public function setAuthorID($authorID) {
+        $this->authorID = $authorID;
+    }
+
+    public function getBannerImage() {
+        return $this->bannerImage;
+    }
+
+    public function setBannerImage($bannerImage) {
+        $this->bannerImage = $bannerImage;
+    }
+
+    public function getTitle() {
+        return $this->title;
+    }
+
+    public function setTitle($title) {
+        $this->title = $title;
+    }
+
+    public function getContent() {
+        return $this->content;
+    }
+
+    public function setContent($content) {
+        $this->content = $content;
+    }
+
+    public function getCategoryID() {
+        return $this->categoryID;
+    }
+
+    public function setCategoryID($categoryID) {
+        $this->categoryID = $categoryID;
+    }
+
+    // Create a new article
+    public function createArticle($authorID = null, $bannerImage = null, $title = null, $content = null, $categoryID = null) {
+        $authorID = $authorID ?? $this->authorID;
+        $bannerImage = $bannerImage ?? $this->bannerImage;
+        $title = $title ?? $this->title;
+        $content = $content ?? $this->content;
+        $categoryID = $categoryID ?? $this->categoryID;
+
         $query = "INSERT INTO Articles (AuthorID, BannerImage, Title, InnerText, CreatedAt, CategoryID) 
                   VALUES (:authorID, :bannerImage, :title, :content, NOW(), :categoryID)";
         $stmt = $this->conn->prepare($query);
@@ -18,7 +88,7 @@ class Articles {
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':content', $content);
         $stmt->bindParam(':categoryID', $categoryID);
-    
+
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
@@ -67,7 +137,9 @@ class Articles {
     }
 
     // Get article by ID
-    public function getArticleByID($articleID) {
+    public function getArticleByID($articleID = null) {
+        $articleID = $articleID ?? $this->articleID;
+
         $query = "
             SELECT 
                 articles.ArticleID,
@@ -109,7 +181,9 @@ class Articles {
     }
 
     // Get articles by AuthorID
-    public function getArticlesByAuthorID($authorID) {
+    public function getArticlesByAuthorID($authorID = null) {
+        $authorID = $authorID ?? $this->authorID;
+
         $query = "SELECT * FROM Articles WHERE AuthorID = :authorID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':authorID', $authorID);
@@ -118,7 +192,12 @@ class Articles {
     }
 
     // Update article
-    public function updateArticle($articleID, $title, $innerText, $bannerPath) {
+    public function updateArticle($articleID = null, $title = null, $innerText = null, $bannerPath = null) {
+        $articleID = $articleID ?? $this->articleID;
+        $title = $title ?? $this->title;
+        $innerText = $innerText ?? $this->content;
+        $bannerPath = $bannerPath ?? $this->bannerImage;
+
         $query = "UPDATE Articles SET Title = :title, InnerText = :innerText, BannerImage = :imgPath WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':title', $title);
@@ -129,7 +208,9 @@ class Articles {
     }
 
     // Delete article
-    public function deleteArticle($articleID) {
+    public function deleteArticle($articleID = null) {
+        $articleID = $articleID ?? $this->articleID;
+
         // Start a transaction to ensure atomicity
         $this->conn->beginTransaction();
 
@@ -176,13 +257,51 @@ class Articles {
 
     // Search articles by title or inner text
     public function searchArticles($searchTerm) {
-        $query = "SELECT * FROM " . $this->view_name . " 
-                  WHERE Title LIKE :term OR InnerText LIKE :term";
+        $query = "
+            SELECT 
+                articles.ArticleID,
+                articles.Title,
+                articles.InnerText,
+                articles.BannerImage,
+                articles.CreatedAt AS ArticleCreatedAt,
+                users.UserID AS AuthorID,
+                CONCAT(users.FirstName, ' ', users.LastName) AS AuthorName,
+                users.Username AS AuthorUsername,
+                users.Email AS AuthorEmail,
+                GROUP_CONCAT(DISTINCT votes.VoteType) AS VoteTypes,
+                GROUP_CONCAT(DISTINCT comments.CommentText) AS Comments,
+                GROUP_CONCAT(DISTINCT categories.CategoryName) AS Categories,
+                GROUP_CONCAT(DISTINCT tags.TagName) AS Tags
+            FROM 
+                articles
+                LEFT JOIN users ON articles.AuthorID = users.UserID
+                LEFT JOIN votes ON articles.ArticleID = votes.ArticleID
+                LEFT JOIN comments ON articles.ArticleID = comments.ArticleID
+                LEFT JOIN articlecategories ON articles.ArticleID = articlecategories.ArticleID
+                LEFT JOIN categories ON articlecategories.CategoryID = categories.CategoryID
+                LEFT JOIN articletags ON articles.ArticleID = articletags.ArticleID
+                LEFT JOIN tags ON articletags.TagID = tags.TagID
+            WHERE 
+                articles.Title LIKE :term OR 
+                users.Username LIKE :term OR 
+                CONCAT(users.FirstName, ' ', users.LastName) LIKE :term
+            GROUP BY 
+                articles.ArticleID,
+                articles.Title,
+                articles.InnerText,
+                articles.BannerImage,
+                articles.CreatedAt,
+                users.UserID,
+                users.FirstName,
+                users.LastName,
+                users.Username,
+                users.Email
+        ";
         $stmt = $this->conn->prepare($query);
-        $term = "%" . $searchTerm . "%"; 
+        $term = "%" . $searchTerm . "%";
         $stmt->bindParam(':term', $term);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC); 
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // Get articles by category
@@ -230,27 +349,29 @@ class Articles {
     }
 
     // Add a tag to an article
-    public function addTag($articleID, $tagID) {
+    public function addTag($articleID = null, $tagID) {
+        $articleID = $articleID ?? $this->articleID;
+
         // Check if the ArticleID exists
         $query = "SELECT ArticleID FROM Articles WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':articleID', $articleID);
         $stmt->execute();
-    
+
         if ($stmt->rowCount() === 0) {
             throw new Exception("ArticleID $articleID does not exist.");
         }
-    
+
         // Check if the TagID exists
         $query = "SELECT TagID FROM Tags WHERE TagID = :tagID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':tagID', $tagID);
         $stmt->execute();
-    
+
         if ($stmt->rowCount() === 0) {
             throw new Exception("TagID $tagID does not exist.");
         }
-    
+
         // Insert into ArticleTags
         $query = "INSERT INTO ArticleTags (ArticleID, TagID) VALUES (:articleID, :tagID)";
         $stmt = $this->conn->prepare($query);
@@ -260,7 +381,9 @@ class Articles {
     }
 
     // Remove a tag from an article
-    public function removeTag($articleID, $tagID) {
+    public function removeTag($articleID = null, $tagID) {
+        $articleID = $articleID ?? $this->articleID;
+
         $query = "DELETE FROM ArticleTags WHERE ArticleID = :articleID AND TagID = :tagID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':articleID', $articleID);
@@ -269,7 +392,9 @@ class Articles {
     }
 
     // Get all tags for an article
-    public function getTagsForArticle($articleID) {
+    public function getTagsForArticle($articleID = null) {
+        $articleID = $articleID ?? $this->articleID;
+
         $query = "SELECT Tags.TagID, Tags.TagName, Tags.Description 
                   FROM Tags 
                   JOIN ArticleTags ON Tags.TagID = ArticleTags.TagID 
@@ -280,33 +405,78 @@ class Articles {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Set article category
+    public function setArticleCategory($articleID = null, $categoryID) {
+        $articleID = $articleID ?? $this->articleID;
 
-    public function setArticleCategory($articleID, $categoryID) {
         // Check if the ArticleID exists
         $query = "SELECT ArticleID FROM Articles WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':articleID', $articleID);
         $stmt->execute();
-    
+
         if ($stmt->rowCount() === 0) {
             throw new Exception("ArticleID $articleID does not exist.");
         }
-    
+
         // Check if the CategoryID exists
         $query = "SELECT CategoryID FROM Categories WHERE CategoryID = :categoryID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':categoryID', $categoryID);
         $stmt->execute();
-    
+
         if ($stmt->rowCount() === 0) {
             throw new Exception("CategoryID $categoryID does not exist.");
         }
-    
+
         // Update the Articles table with the CategoryID
         $query = "UPDATE Articles SET CategoryID = :categoryID WHERE ArticleID = :articleID";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':categoryID', $categoryID);
         $stmt->bindParam(':articleID', $articleID);
         return $stmt->execute();
+    }
+
+    // Ban all articles by a specific author
+    public function banArticlesByAuthor($authorID = null) {
+        $authorID = $authorID ?? $this->authorID;
+
+        $query = "UPDATE Articles SET IsBanned = 'yes' WHERE AuthorID = :authorID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':authorID', $authorID);
+        return $stmt->execute();
+    }
+
+    // Unban all articles by a specific author
+    public function unbanArticlesByAuthor($authorID = null) {
+        $authorID = $authorID ?? $this->authorID;
+
+        $query = "UPDATE Articles SET IsBanned = 'no' WHERE AuthorID = :authorID";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':authorID', $authorID);
+        return $stmt->execute();
+    }
+
+    // Get most associated tags in the last 30 days
+    public function getMostAssociatedTagsLast30Days() {
+        $query = "
+            SELECT 
+                tags.TagName, 
+                COUNT(articletags.TagID) AS AssociationCount
+            FROM 
+                articles
+                JOIN articletags ON articles.ArticleID = articletags.ArticleID
+                JOIN tags ON articletags.TagID = tags.TagID
+            WHERE 
+                articles.CreatedAt >= NOW() - INTERVAL 30 DAY
+            GROUP BY 
+                tags.TagID
+            ORDER BY 
+                AssociationCount DESC LIMIT 1;
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
