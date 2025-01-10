@@ -89,6 +89,26 @@ $articleComments = $comments->getCommentsByArticle($articleID);
     </script>
 </head>
 <body class="bg-gray-100">
+    <header class="bg-white shadow-md p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Article Hub</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="home.php" class="text-gray-600 hover:text-blue-600">Home</a></li>
+                    <?php if (isset($_SESSION['user'])): ?>
+                        <li><a href="profile.php" class="text-gray-600 hover:text-blue-600">Profile</a></li>
+                        <?php if ($_SESSION['user']['UserType'] === 'Admin'): ?>
+                            <li><a href="dashboard.php" class="text-gray-600 hover:text-blue-600">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="logout.php" class="text-gray-600 hover:text-blue-600">Logout</a></li>
+                    <?php else: ?>
+                        <li><a href="login.php" class="text-gray-600 hover:text-blue-600">Login</a></li>
+                        <li><a href="signup.php" class="text-gray-600 hover:text-blue-600">Signup</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+    </header>
     <div class="flex">
         <!-- Main content area -->
         <main class="flex-1 p-6">
