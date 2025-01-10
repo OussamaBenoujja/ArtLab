@@ -7,6 +7,7 @@ $db = new Database();
 $articles = new Articles($db->getConnection()); 
 
 $selectedCategory = isset($_GET['category']) ? (int)$_GET['category'] : null;
+$currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 
 if ($selectedCategory) {
     $allArticles = $articles->getArticlesByCategory($selectedCategory); 
@@ -15,12 +16,10 @@ if ($selectedCategory) {
 }
 
 $totalArticles = count($allArticles); 
-
 $articlesPerPage = 9;
 $totalPages = ceil($totalArticles / $articlesPerPage);
-$currentArticlePage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$currentArticlePage = max(1, min($totalPages, $currentArticlePage)); 
-$offset = ($currentArticlePage - 1) * $articlesPerPage;
+$currentPage = max(1, min($totalPages, $currentPage)); 
+$offset = ($currentPage - 1) * $articlesPerPage;
 
 $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
 ?>
@@ -59,6 +58,13 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
     </header>
 
     <div class="max-w-7xl mx-auto p-6">
+        <!-- Search Form -->
+        <form id="searchForm" class="mb-6">
+            <label for="searchTerm" class="block text-sm font-medium text-gray-700">Search Articles</label>
+            <input type="text" id="searchTerm" name="searchTerm" placeholder="Search by title or author name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+        </form>
+
+        <!-- Category Filter Form -->
         <form id="categoryFilterForm" class="mb-6">
             <label for="category" class="block text-sm font-medium text-gray-700">Filter by Category</label>
             <select id="category" name="category" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
@@ -91,7 +97,7 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
                     </h2>
                     <p class="text-gray-600 mt-2 article-text"><?= htmlspecialchars($article['InnerText']) ?></p>
                     <div class="mt-4 flex justify-between items-center">
-                        <span class="text-gray-500 text-sm">By <?= htmlspecialchars($article['AuthorName']) ?></span>
+                        <span class="text-gray-500 text-sm">By <?= htmlspecialchars($article['AuthorName']) ?> </span>
                         <span class="text-gray-500 text-sm"><?= htmlspecialchars(substr($article['ArticleCreatedAt'], 0, 10)) ?></span>
                     </div>
                 </div>
@@ -101,9 +107,9 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
 
         <?php if ($totalArticles > $articlesPerPage): ?>
         <div id="pagination" class="flex justify-center mt-6">
-            <button id="prevPage" data-page="<?= $currentArticlePage - 1 ?>" class="px-4 py-2 border rounded <?= ($currentArticlePage == 1 ? 'opacity-50 cursor-not-allowed' : '') ?>">Previous</button>
-            <span class="mx-2">Page <?= $currentArticlePage ?> of <?= $totalPages ?></span>
-            <button id="nextPage" data-page="<?= $currentArticlePage + 1 ?>" class="px-4 py-2 border rounded <?= ($currentArticlePage == $totalPages ? 'opacity-50 cursor-not-allowed' : '') ?>">Next</button>
+            <button id="prevPage" data-page="<?= $currentPage - 1 ?>" class="px-4 py-2 border rounded <?= ($currentPage == 1 ? 'opacity-50 cursor-not-allowed' : '') ?>">Previous</button>
+            <span class="mx-2">Page <?= $currentPage ?> of <?= $totalPages ?></span>
+            <button id="nextPage" data-page="<?= $currentPage + 1 ?>" class="px-4 py-2 border rounded <?= ($currentPage == $totalPages ? 'opacity-50 cursor-not-allowed' : '') ?>">Next</button>
         </div>
         <?php endif; ?>
     </main>
@@ -116,52 +122,48 @@ $currentArticles = array_slice($allArticles, $offset, $articlesPerPage);
 
     <script>
         $(document).ready(function() {
-            $('.article-text').each(function() {
-                const originalText = $(this).text();
-                if (originalText.length > 50) {
-                    const truncatedText = originalText.substring(0, 50) + " ... ";
-                    $(this).text(truncatedText);
-                    $(this).append('<a href="#" class="text-blue-600 hover:underline see-more">See More</a>');
-                    $(this).data('full-text', originalText);
-                }
-            });
-
-            $(document).on('click', '.see-more', function(e) {
+            // Handle search form input
+            $('#searchForm').on('input', function(e) {
                 e.preventDefault();
-                const fullText = $(this).parent().data('full-text');
-                $(this).parent().text(fullText);
+                const searchTerm = $('#searchTerm').val();
+                const categoryID = $('#category').val();
+                fetchArticles(searchTerm, categoryID);
             });
 
+            // Handle category filter change
             $('#category').change(function() {
+                const searchTerm = $('#searchTerm').val();
                 const categoryID = $(this).val();
-                $.ajax({
-                    url: 'fetch_articles.php',
-                    type: 'GET',
-                    data: { category: categoryID },
-                    success: function(response) {
-                        $('#articlesGrid').html(response);
-                    },
-                    error: function(xhr) {
-                        alert('An error occurred while fetching articles.');
-                    }
-                });
+                fetchArticles(searchTerm, categoryID);
             });
 
+            // Handle pagination buttons
             $('#prevPage, #nextPage').click(function() {
                 const page = $(this).data('page');
+                const searchTerm = $('#searchTerm').val();
                 const categoryID = $('#category').val();
+                fetchArticles(searchTerm, categoryID, page);
+            });
+
+            // Function to fetch articles via AJAX
+            function fetchArticles(searchTerm = '', categoryID = '', page = 1) {
                 $.ajax({
                     url: 'fetch_articles.php',
                     type: 'GET',
-                    data: { category: categoryID, page: page },
+                    data: { 
+                        searchTerm: searchTerm,
+                        category: categoryID,
+                        page: page
+                    },
                     success: function(response) {
-                        $('#articlesGrid').html(response);
+                        $('#articlesGrid').html(response.articles);
+                        $('#pagination').html(response.pagination);
                     },
                     error: function(xhr) {
                         alert('An error occurred while fetching articles.');
                     }
                 });
-            });
+            }
         });
     </script>
 
